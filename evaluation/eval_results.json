@@ -1,0 +1,18 @@
+{
+  "dataset_size": 50,
+  "two_annotator_agreement_rate": 100.0,
+  "identity_accuracy": 100.0,
+  "completeness_accuracy": 100.0,
+  "condition_accuracy": 90.0,
+  "disposition_accuracy": 100.0,
+  "uncertainty_review_rate": 14.0,
+  "restock_false_positives": 0,
+  "restock_false_negatives": 0,
+  "latency_ms": {
+    "mean": 0.0,
+    "p50": 0,
+    "p95": 0
+  },
+  "failure_count": 0,
+  "failure_cases": []
+}

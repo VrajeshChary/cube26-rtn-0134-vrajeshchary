@@ -6,4 +6,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.pytest_cache/
+.freebuff/
 .DS_Store
+

@@ -1,0 +1,902 @@
+[
+  {
+    "unit_id": "UNIT-EVAL-001",
+    "ordered_sku": "SKU-BOTTLE-750",
+    "ordered_asin": "B0DUMMY622",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Factory seal intact, pristine outer box"
+  },
+  {
+    "unit_id": "UNIT-EVAL-002",
+    "ordered_sku": "SKU-LAMP-LED",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Opened box but pristine condition, plastic wrap intact on clamp"
+  },
+  {
+    "unit_id": "UNIT-EVAL-003",
+    "ordered_sku": "SKU-LAMP-LED",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "opened_unused",
+    "parts_missing": "usb cable",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "refurbish"
+    },
+    "labeler_1": "refurbish",
+    "labeler_2": "refurbish",
+    "notes": "Lamp in perfect shape, but USB-C power cord missing from box"
+  },
+  {
+    "unit_id": "UNIT-EVAL-004",
+    "ordered_sku": "SKU-PUZZLE-500",
+    "ordered_asin": "B0DUMMY729",
+    "observed_state": "damaged",
+    "parts_missing": "puzzle pieces",
+    "identity_match": "yes",
+    "defect_type": "bag torn, missing pieces",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Torn inner bag with pieces missing. Unsellable."
+  },
+  {
+    "unit_id": "UNIT-EVAL-005",
+    "ordered_sku": "SKU-SERUM-30",
+    "ordered_asin": "B0DUMMY031",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Cosmetic tamper-evident shrink band 100% intact"
+  },
+  {
+    "unit_id": "UNIT-EVAL-006",
+    "ordered_sku": "SKU-SERUM-30",
+    "ordered_asin": "B0DUMMY031",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "tamper seal broken",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Cosmetic seal broken. Hygiene policy strictly prohibits restocking"
+  },
+  {
+    "unit_id": "UNIT-EVAL-007",
+    "ordered_sku": "SKU-PROT-1KG",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "inner foil seal peeled",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Consumable food product with opened seal must be destroyed"
+  },
+  {
+    "unit_id": "UNIT-EVAL-008",
+    "ordered_sku": "SKU-PROT-1KG",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Induction seal untouched, outer safety ring locked"
+  },
+  {
+    "unit_id": "UNIT-EVAL-009",
+    "ordered_sku": "SKU-LEASH-6FT",
+    "ordered_asin": "B0DUMMY205",
+    "observed_state": "signs_of_use",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "mud stains and bite fraying",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Good",
+      "disposition": "liquidate"
+    },
+    "labeler_1": "liquidate",
+    "labeler_2": "liquidate",
+    "notes": "Clear signs of outdoor dog use, clip intact, liquidate"
+  },
+  {
+    "unit_id": "UNIT-EVAL-010",
+    "ordered_sku": "SKU-CABLE-USBC",
+    "ordered_asin": "B0DUMMY261",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "no",
+    "defect_type": "wrong cheap black PVC cable inside",
+    "ground_truth": {
+      "identity": "FAIL",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "pending_review"
+    },
+    "labeler_1": "pending_review",
+    "labeler_2": "pending_review",
+    "notes": "Customer swap fraud: returned standard cable instead of braided 2m"
+  },
+  {
+    "unit_id": "UNIT-EVAL-011",
+    "ordered_sku": "SKU-CANDLE-3",
+    "ordered_asin": "B0DUMMY964",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "shattered glass jar in box",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Broken glass hazard, hazardous disposal"
+  },
+  {
+    "unit_id": "UNIT-EVAL-012",
+    "ordered_sku": "SKU-MUG-11",
+    "ordered_asin": "B0DUMMY351",
+    "observed_state": "uncertain",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "internal foam unopened, camera glare",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "UNCERTAIN",
+      "condition": "UNCERTAIN",
+      "disposition": "pending_review"
+    },
+    "labeler_1": "pending_review",
+    "labeler_2": "pending_review",
+    "notes": "Opaque protective foam wrapping blocks view of ceramic condition"
+  },
+  {
+    "unit_id": "UNIT-EVAL-013",
+    "ordered_sku": "SKU-TOWEL-BLU",
+    "ordered_asin": "B0DUMMY600",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "uncertain",
+    "defect_type": "barcode label ripped off",
+    "ground_truth": {
+      "identity": "UNCERTAIN",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "pending_review"
+    },
+    "labeler_1": "pending_review",
+    "labeler_2": "pending_review",
+    "notes": "Missing product identifier tag, cannot verify SKU with certainty"
+  },
+  {
+    "unit_id": "UNIT-EVAL-014",
+    "ordered_sku": "SKU-PUZZLE-500",
+    "ordered_asin": "B0DUMMY729",
+    "observed_state": "opened_unused",
+    "parts_missing": "poster",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "refurbish"
+    },
+    "labeler_1": "refurbish",
+    "labeler_2": "refurbish",
+    "notes": "Sealed puzzle bag intact, but reference poster missing; can be re-inserted"
+  },
+  {
+    "unit_id": "UNIT-EVAL-015",
+    "ordered_sku": "SKU-BOTTLE-750",
+    "ordered_asin": "B0DUMMY622",
+    "observed_state": "signs_of_use",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "minor scuff on base",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Good",
+      "disposition": "liquidate"
+    },
+    "labeler_1": "liquidate",
+    "labeler_2": "liquidate",
+    "notes": "Used beverage container with cosmetic base scuffs; secondary liquidation"
+  },
+  {
+    "unit_id": "UNIT-EVAL-016",
+    "ordered_sku": "SKU-CANDLE-3",
+    "ordered_asin": "B0DUMMY964",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Mint condition in outer shrink wrap"
+  },
+  {
+    "unit_id": "UNIT-EVAL-017",
+    "ordered_sku": "SKU-LAMP-LED",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "broken hinge joint",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Mechanical failure, snapped swing arm"
+  },
+  {
+    "unit_id": "UNIT-EVAL-018",
+    "ordered_sku": "SKU-CABLE-USBC",
+    "ordered_asin": "B0DUMMY261",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Original hanging bag sealed"
+  },
+  {
+    "unit_id": "UNIT-EVAL-019",
+    "ordered_sku": "SKU-MUG-11",
+    "ordered_asin": "B0DUMMY351",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "chipped handle on mug 1",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Broken ceramic with sharp edge hazard"
+  },
+  {
+    "unit_id": "UNIT-EVAL-020",
+    "ordered_sku": "SKU-TOWEL-BLU",
+    "ordered_asin": "B0DUMMY600",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Pristine unopened polybag"
+  },
+  {
+    "unit_id": "UNIT-EVAL-021",
+    "ordered_sku": "SKU-PUZZLE-500",
+    "ordered_asin": "B0DUMMY729",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Factory shrink wrapped puzzle box"
+  },
+  {
+    "unit_id": "UNIT-EVAL-022",
+    "ordered_sku": "SKU-LEASH-6FT",
+    "ordered_asin": "B0DUMMY205",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Retail card hanger and zip-ties intact"
+  },
+  {
+    "unit_id": "UNIT-EVAL-023",
+    "ordered_sku": "SKU-BOTTLE-750",
+    "ordered_asin": "B0DUMMY622",
+    "observed_state": "opened_unused",
+    "parts_missing": "lid",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Bottle without matching lid is unusable"
+  },
+  {
+    "unit_id": "UNIT-EVAL-024",
+    "ordered_sku": "SKU-SERUM-30",
+    "ordered_asin": "B0DUMMY031",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "leaking bottle inside box",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Fluid leakage and water-logged packaging"
+  },
+  {
+    "unit_id": "UNIT-EVAL-025",
+    "ordered_sku": "SKU-CANDLE-3",
+    "ordered_asin": "B0DUMMY964",
+    "observed_state": "signs_of_use",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "wicks burned on 2 candles",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Good",
+      "disposition": "liquidate"
+    },
+    "labeler_1": "liquidate",
+    "labeler_2": "liquidate",
+    "notes": "Partially burned candles; liquidate"
+  },
+  {
+    "unit_id": "UNIT-EVAL-026",
+    "ordered_sku": "SKU-LAMP-LED",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "signs_of_use",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "scratches on aluminum arm",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Good",
+      "disposition": "liquidate"
+    },
+    "labeler_1": "liquidate",
+    "labeler_2": "liquidate",
+    "notes": "Functional lamp with visible desktop scratches"
+  },
+  {
+    "unit_id": "UNIT-EVAL-027",
+    "ordered_sku": "SKU-CABLE-USBC",
+    "ordered_asin": "B0DUMMY261",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "connector bent, wires exposed",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Electrical safety hazard, frayed conductor"
+  },
+  {
+    "unit_id": "UNIT-EVAL-028",
+    "ordered_sku": "SKU-MUG-11",
+    "ordered_asin": "B0DUMMY351",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Mugs inspected, brand new appearance, restock"
+  },
+  {
+    "unit_id": "UNIT-EVAL-029",
+    "ordered_sku": "SKU-PUZZLE-500",
+    "ordered_asin": "B0DUMMY729",
+    "observed_state": "uncertain",
+    "parts_missing": "",
+    "identity_match": "uncertain",
+    "defect_type": "box barcode obliterated by water",
+    "ground_truth": {
+      "identity": "UNCERTAIN",
+      "completeness": "UNCERTAIN",
+      "condition": "UNCERTAIN",
+      "disposition": "pending_review"
+    },
+    "labeler_1": "pending_review",
+    "labeler_2": "pending_review",
+    "notes": "Water damaged packaging makes identity unreadable"
+  },
+  {
+    "unit_id": "UNIT-EVAL-030",
+    "ordered_sku": "SKU-BOTTLE-750",
+    "ordered_asin": "B0DUMMY622",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "heavy dent on base, won't stand",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Structural impact prevents upright standing"
+  },
+  {
+    "unit_id": "UNIT-EVAL-031",
+    "ordered_sku": "SKU-LEASH-6FT",
+    "ordered_asin": "B0DUMMY205",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Unused leash removed from header card, clean"
+  },
+  {
+    "unit_id": "UNIT-EVAL-032",
+    "ordered_sku": "SKU-LAMP-LED",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "opened_unused",
+    "parts_missing": "manual",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "refurbish"
+    },
+    "labeler_1": "refurbish",
+    "labeler_2": "refurbish",
+    "notes": "Missing instruction sheet; prep station can print PDF"
+  },
+  {
+    "unit_id": "UNIT-EVAL-033",
+    "ordered_sku": "SKU-TOWEL-BLU",
+    "ordered_asin": "B0DUMMY600",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "large bleach stain and rip",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Fabric ruined by chemical contact"
+  },
+  {
+    "unit_id": "UNIT-EVAL-034",
+    "ordered_sku": "SKU-PROT-1KG",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "opened_unused",
+    "parts_missing": "scoop",
+    "identity_match": "yes",
+    "defect_type": "opened foil",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Consumable opened plus scoop missing; disposal"
+  },
+  {
+    "unit_id": "UNIT-EVAL-035",
+    "ordered_sku": "SKU-CANDLE-3",
+    "ordered_asin": "B0DUMMY964",
+    "observed_state": "opened_unused",
+    "parts_missing": "candle x1",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Only 2 of 3 candles in set returned. Critical missing"
+  },
+  {
+    "unit_id": "UNIT-EVAL-036",
+    "ordered_sku": "SKU-SERUM-30",
+    "ordered_asin": "B0DUMMY031",
+    "observed_state": "opened_unused",
+    "parts_missing": "dropper",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Missing critical applicator on cosmetic item"
+  },
+  {
+    "unit_id": "UNIT-EVAL-037",
+    "ordered_sku": "SKU-PUZZLE-500",
+    "ordered_asin": "B0DUMMY729",
+    "observed_state": "signs_of_use",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "box scuffed, bag open but complete",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Good",
+      "disposition": "liquidate"
+    },
+    "labeler_1": "liquidate",
+    "labeler_2": "liquidate",
+    "notes": "Open puzzle cannot be guaranteed complete by vision, liquidate"
+  },
+  {
+    "unit_id": "UNIT-EVAL-038",
+    "ordered_sku": "SKU-BOTTLE-750",
+    "ordered_asin": "B0DUMMY622",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Brand new in cylinder packaging"
+  },
+  {
+    "unit_id": "UNIT-EVAL-039",
+    "ordered_sku": "SKU-CABLE-USBC",
+    "ordered_asin": "B0DUMMY261",
+    "observed_state": "signs_of_use",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "minor dust on braided jacket",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Good",
+      "disposition": "liquidate"
+    },
+    "labeler_1": "liquidate",
+    "labeler_2": "liquidate",
+    "notes": "Cable functions 100%, cosmetic dust, liquidate"
+  },
+  {
+    "unit_id": "UNIT-EVAL-040",
+    "ordered_sku": "SKU-MUG-11",
+    "ordered_asin": "B0DUMMY351",
+    "observed_state": "opened_unused",
+    "parts_missing": "mug x1",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "FAIL",
+      "condition": "Used - Like New",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Set of 2 returned with only 1 mug. Critical part missing"
+  },
+  {
+    "unit_id": "UNIT-EVAL-041",
+    "ordered_sku": "SKU-LEASH-6FT",
+    "ordered_asin": "B0DUMMY205",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "no",
+    "defect_type": "nylon web leash from competitor brand",
+    "ground_truth": {
+      "identity": "FAIL",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "pending_review"
+    },
+    "labeler_1": "pending_review",
+    "labeler_2": "pending_review",
+    "notes": "Brand swap detected on return"
+  },
+  {
+    "unit_id": "UNIT-EVAL-042",
+    "ordered_sku": "SKU-LAMP-LED",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "factory_sealed",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Factory tape intact, carton flawless"
+  },
+  {
+    "unit_id": "UNIT-EVAL-043",
+    "ordered_sku": "SKU-TOWEL-BLU",
+    "ordered_asin": "B0DUMMY600",
+    "observed_state": "signs_of_use",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "sand and damp odor",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Good",
+      "disposition": "liquidate"
+    },
+    "labeler_1": "liquidate",
+    "labeler_2": "liquidate",
+    "notes": "Washable towel with beach residue; secondary liquidation"
+  },
+  {
+    "unit_id": "UNIT-EVAL-044",
+    "ordered_sku": "SKU-CANDLE-3",
+    "ordered_asin": "B0DUMMY964",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "gift box corner crumpled",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Very Good",
+      "disposition": "refurbish"
+    },
+    "labeler_1": "refurbish",
+    "labeler_2": "refurbish",
+    "notes": "Unused candles in damaged gift box; can be re-boxed"
+  },
+  {
+    "unit_id": "UNIT-EVAL-045",
+    "ordered_sku": "SKU-SERUM-30",
+    "ordered_asin": "B0DUMMY031",
+    "observed_state": "uncertain",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "bottle label stained, fluid level unclear",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "UNCERTAIN",
+      "condition": "UNCERTAIN",
+      "disposition": "pending_review"
+    },
+    "labeler_1": "pending_review",
+    "labeler_2": "pending_review",
+    "notes": "Cannot determine volume or seal state through dark amber bottle"
+  },
+  {
+    "unit_id": "UNIT-EVAL-046",
+    "ordered_sku": "SKU-BOTTLE-750",
+    "ordered_asin": "B0DUMMY622",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "refurbish"
+    },
+    "labeler_1": "refurbish",
+    "labeler_2": "refurbish",
+    "notes": "Sanitization and re-boxing needed for beverage container"
+  },
+  {
+    "unit_id": "UNIT-EVAL-047",
+    "ordered_sku": "SKU-PUZZLE-500",
+    "ordered_asin": "B0DUMMY729",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "no",
+    "defect_type": "1000pc puzzle in 500pc box",
+    "ground_truth": {
+      "identity": "FAIL",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "pending_review"
+    },
+    "labeler_1": "pending_review",
+    "labeler_2": "pending_review",
+    "notes": "Mismatched contents"
+  },
+  {
+    "unit_id": "UNIT-EVAL-048",
+    "ordered_sku": "SKU-PROT-1KG",
+    "ordered_asin": "B0DUMMY357",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "cracked tub lid, powder spilling",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Contaminated food product with fractured lid"
+  },
+  {
+    "unit_id": "UNIT-EVAL-049",
+    "ordered_sku": "SKU-CABLE-USBC",
+    "ordered_asin": "B0DUMMY261",
+    "observed_state": "opened_unused",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Used - Like New",
+      "disposition": "restock"
+    },
+    "labeler_1": "restock",
+    "labeler_2": "restock",
+    "notes": "Repackable open-box electronic accessory in mint condition"
+  },
+  {
+    "unit_id": "UNIT-EVAL-050",
+    "ordered_sku": "SKU-LEASH-6FT",
+    "ordered_asin": "B0DUMMY205",
+    "observed_state": "damaged",
+    "parts_missing": "",
+    "identity_match": "yes",
+    "defect_type": "carabiner spring lock broken",
+    "ground_truth": {
+      "identity": "PASS",
+      "completeness": "PASS",
+      "condition": "Unacceptable",
+      "disposition": "dispose"
+    },
+    "labeler_1": "dispose",
+    "labeler_2": "dispose",
+    "notes": "Critical safety clasp failure on dog leash"
+  }
+]
