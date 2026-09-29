@@ -115,6 +115,7 @@ def list_sample_returns():
                 "parts_missing": row.get("parts_missing", ""),
                 "observed_state": row.get("observed_state", "opened_unused"),
                 "operator_disposition": row.get("operator_disposition", ""),
+                "photo_refs": row.get("photo_refs", ""),
                 "operator_id": row.get("operator_id", ""),
                 "captured_at": row.get("captured_at", "")
             })

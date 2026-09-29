@@ -7,6 +7,27 @@
 [![Evaluation](https://img.shields.io/badge/eval%20accuracy-100%25-success.svg)]()
 [![Schema](https://img.shields.io/badge/schema%20version-2.0.0-blue.svg)]()
 [![Tenancy](https://img.shields.io/badge/tenancy-isolated-blueviolet.svg)]()
+[![Frontend](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://retrunsmanager.vercel.app)
+[![Backend](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway)](https://cube26-rtn-0134-vrajeshchary-production.up.railway.app)
+
+---
+
+## Live Demo
+
+- **Frontend:** [https://retrunsmanager.vercel.app](https://retrunsmanager.vercel.app)
+- **Backend:** [https://cube26-rtn-0134-vrajeshchary-production.up.railway.app](https://cube26-rtn-0134-vrajeshchary-production.up.railway.app)
+  - API Health: [`/api/health`](https://cube26-rtn-0134-vrajeshchary-production.up.railway.app/api/health)
+  - Swagger Documentation: [`/docs`](https://cube26-rtn-0134-vrajeshchary-production.up.railway.app/docs)
+
+## Demo Video
+
+- **YouTube:** [https://youtu.be/tuewGC5aN1k](https://youtu.be/tuewGC5aN1k)
+
+[![Cube Buildathon Returns Manager Demo](https://img.youtube.com/vi/tuewGC5aN1k/maxresdefault.jpg)](https://youtu.be/tuewGC5aN1k)
+
+## LinkedIn Post
+
+- **LinkedIn Announcement:** [https://www.linkedin.com/posts/vrajeshchary_cubebuildathon-cube-sydonai-activity-7510759326962139137-bxxw](https://www.linkedin.com/posts/vrajeshchary_cubebuildathon-cube-sydonai-activity-7510759326962139137-bxxw)
 
 ---
 
