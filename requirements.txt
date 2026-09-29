@@ -1,0 +1,19 @@
+# Production Dependencies for CUBE Returns Manager (Pod 04)
+
+# Web Framework & ASGI Server
+fastapi>=0.110.0,<1.0.0
+uvicorn[standard]>=0.28.0,<1.0.0
+pydantic>=2.6.0,<3.0.0
+
+# Image Processing & Quality Verification
+pillow>=10.2.0,<12.0.0
+
+# Environment Configuration
+python-dotenv>=1.0.0,<2.0.0
+
+# Optional Direct Google GenAI SDK (Multimodal Gemini)
+google-genai>=1.0.0,<2.0.0
+
+# Testing & Client Verification
+httpx>=0.27.0,<1.0.0
+pytest>=8.0.0,<10.0.0
