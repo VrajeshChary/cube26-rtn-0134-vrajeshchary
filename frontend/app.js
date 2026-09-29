@@ -1,3 +1,35 @@
+// Environment-Aware API Configuration for Local and Deployed Environments (Vercel / Render)
+const API_BASE = (function () {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramUrl = urlParams.get("api_url") || urlParams.get("backend_url");
+    if (paramUrl) {
+      const clean = paramUrl.trim().replace(/\/+$/, "");
+      localStorage.setItem("CUBE_API_BASE_URL", clean);
+      return clean;
+    }
+  } catch (e) {}
+
+  try {
+    const saved = localStorage.getItem("CUBE_API_BASE_URL");
+    if (saved && saved.trim()) {
+      return saved.trim().replace(/\/+$/, "");
+    }
+  } catch (e) {}
+
+  if (typeof window.API_BASE_URL === "string" && window.API_BASE_URL.trim()) {
+    return window.API_BASE_URL.trim().replace(/\/+$/, "");
+  }
+
+  return "";
+})();
+
+function getApiUrl(endpoint) {
+  if (!API_BASE) return endpoint;
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : "/" + endpoint;
+  return `${API_BASE}${cleanEndpoint}`;
+}
+
 let currentRecord = null;
 let uploadedImageBase64 = null;
 let uploadedImageFilename = null;
@@ -290,7 +322,7 @@ function setupEventListeners() {
 
 async function checkSetupStatus() {
   try {
-    const res = await fetch("/api/setup");
+    const res = await fetch(getApiUrl("/api/setup"));
     if (!res.ok) throw new Error("Failed to check setup");
     const data = await res.json();
 
@@ -446,7 +478,7 @@ async function runInspection() {
   };
 
   try {
-    const res = await fetch("/api/inspect", {
+    const res = await fetch(getApiUrl("/api/inspect"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -1151,7 +1183,7 @@ async function submitOverride() {
   };
 
   try {
-    const res = await fetch("/api/override", {
+    const res = await fetch(getApiUrl("/api/override"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -1173,7 +1205,7 @@ async function openEvalModal() {
   showToast("Running 50-unit evaluation suite...");
 
   try {
-    const res = await fetch("/api/eval/run");
+    const res = await fetch(getApiUrl("/api/eval/run"));
     if (!res.ok) throw new Error("Eval failed");
     const data = await res.json();
 
