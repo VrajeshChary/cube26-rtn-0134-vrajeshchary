@@ -9,9 +9,9 @@
   "restock_false_positives": 0,
   "restock_false_negatives": 0,
   "latency_ms": {
-    "mean": 1.0,
+    "mean": 0.1,
     "p50": 0,
-    "p95": 3
+    "p95": 1
   },
   "failure_count": 0,
   "failure_cases": []
