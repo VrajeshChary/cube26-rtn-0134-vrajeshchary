@@ -287,7 +287,7 @@ def test_setup_check_and_env_loading():
     assert status["api_key_configured"] is True
     assert status["api_key_preview"] is not None
     assert "sk-" in status["api_key_preview"]
-    assert len(status["api_key_preview"]) < 25  # Masked
+    assert len(status["api_key_preview"]) < 25
     assert status["env_loaded"] is True
     assert status["fake_fallback_enabled"] is False
 
@@ -579,8 +579,8 @@ def test_disposition_reasoning_priority_product_mismatch():
         organization_id="org_demo_alpha",
     )
     observed = {
-        "observed_state": "uncertain",  # would trigger uncertainty on completeness/condition
-        "identity_match": "no",         # operator / vision identifies wrong item
+        "observed_state": "uncertain",
+        "identity_match": "no",
     }
     record = pipeline.process_inspection(req, observed_labels=observed)
 
@@ -671,9 +671,9 @@ def test_damaged_lamp_disposition_priority_over_completeness_uncertainty():
     }
     record = pipeline.process_inspection(req, image_metadata=img_meta)
 
-    assert record.checks[0].verdict == CheckVerdict.PASS       # Identity passes
-    assert record.checks[1].verdict == CheckVerdict.UNCERTAIN  # Completeness is UNCERTAIN (unconfirmed accessories)
-    assert record.checks[2].verdict == CheckVerdict.FAIL       # Condition fails due to damage
+    assert record.checks[0].verdict == CheckVerdict.PASS
+    assert record.checks[1].verdict == CheckVerdict.UNCERTAIN
+    assert record.checks[2].verdict == CheckVerdict.FAIL
     assert record.outcome.decision == DispositionDecision.DISPOSE
     assert "damage" in record.outcome.reason.lower()
     assert "Ambiguous evidence" not in record.outcome.reason
@@ -780,9 +780,9 @@ def test_completeness_all_bom_components_visually_confirmed_pass():
         organization_id="org_demo_alpha",
     )
     record = pipeline.process_inspection(req, image_metadata=img_meta_complete)
-    assert record.checks[0].verdict == CheckVerdict.PASS  # Identity
-    assert record.checks[1].verdict == CheckVerdict.PASS  # Completeness
-    assert record.checks[2].verdict == CheckVerdict.PASS  # Condition
+    assert record.checks[0].verdict == CheckVerdict.PASS
+    assert record.checks[1].verdict == CheckVerdict.PASS
+    assert record.checks[2].verdict == CheckVerdict.PASS
     assert record.outcome.decision == DispositionDecision.RESTOCK
 
 

@@ -1,19 +1,20 @@
 """Returns Pipeline Orchestrator.
 
 Executes:
-1. Identity Agent
-2. Completeness Agent
-3. Condition Agent
-4. Disposition Agent
+1. Vision Evidence Agent
+2. Identity Agent
+3. Completeness Agent
+4. Condition Agent
+5. Disposition Agent
 Computes deterministic SHA-256 hash and enforces Fail-Open reliability.
 """
 
 import logging
-import re
 import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+
 from .agents.completeness_agent import CompletenessAgent
 from .agents.condition_agent import ConditionAgent
 from .agents.disposition_agent import DispositionAgent
@@ -30,6 +31,7 @@ from .models import (
     Outcome,
     ReturnInspectionSubject,
 )
+from .utils import contains_damage_terms, is_non_product_media
 
 logger = logging.getLogger(__name__)
 
@@ -73,12 +75,12 @@ class ReturnsInspectionPipeline:
         try:
             t_vision_start = time.time()
             vision_evidence = self.vision_agent.extract_evidence(
-                image_base64=request.image_data,
+                image_base64=request.image_data or request.image_base64,
                 image_filename=request.image_filename,
                 catalog_product=catalog_product,
                 context_hints=observed_labels,
             )
-            vision_latency = max(int((time.time() - t_vision_start) * 1000), 12)
+            vision_latency = int((time.time() - t_vision_start) * 1000)
             vision_metadata = vision_evidence.model_dump()
             combined_image_metadata = {**vision_metadata, **image_metadata}
 
@@ -102,16 +104,9 @@ class ReturnsInspectionPipeline:
                 image_metadata=combined_image_metadata,
             )
 
-            non_product_terms = [
-                "logo", "screenshot", "document", "graphic", "invoice",
-                "unrelated media", "non-product image", "non-product", "non product",
-                "screengrab", "receipt", "shipping label", "paper", "label sheet",
-                "blank screen", "clipart", "wallpaper", "illustration"
-            ]
-            check_text = f"{vision_evidence.detected_product or ''} {combined_image_metadata.get('detected_product', '')} {request.image_filename or ''} {vision_evidence.uncertainty_notes or ''}".lower()
-            non_prod_detected = any(
-                re.search(r'\b' + re.escape(kw) + r'\b', check_text) for kw in non_product_terms
-            )
+            check_text = f"{vision_evidence.detected_product or ''} {combined_image_metadata.get('detected_product', '')} {request.image_filename or ''} {vision_evidence.uncertainty_notes or ''}"
+            non_prod_detected = is_non_product_media(check_text)
+
             if vision_evidence.has_image:
                 is_phys = (not non_prod_detected) and (vision_evidence.physical_product_detected is not False) and (combined_image_metadata.get("physical_product_detected") is not False)
             else:
@@ -128,6 +123,7 @@ class ReturnsInspectionPipeline:
                 vision_verdict = CheckVerdict.UNCERTAIN
             else:
                 vision_verdict = CheckVerdict.PASS
+
             vision_check = CheckResult(
                 check_key="vision_evidence",
                 verdict=vision_verdict,
@@ -157,16 +153,12 @@ class ReturnsInspectionPipeline:
             raw_packaging = combined_image_metadata.get("packaging_state") or vision_evidence.packaging_state or observed_labels.get("observed_state") or "opened_unused"
             cond_detail = condition_check.detail or {}
             cond_evidence_text = f"{cond_detail.get('evidence', '')} {cond_detail.get('reason', '')} {' '.join(vision_evidence.visible_damage or [])} {' '.join(combined_image_metadata.get('visible_damage') or [])}".lower()
-            structural_damage_terms = [
-                "crack", "broken", "shattered", "frayed", "torn", "rip", "bent", "leak", "dent",
-                "structural damage", "breakage", "damage observed", "damage detected"
-            ]
 
             has_structural_damage = (
                 condition_check.verdict == CheckVerdict.FAIL
                 and (
                     cond_detail.get("amazon_condition") == AmazonCondition.UNACCEPTABLE.value
-                    or any(t in cond_evidence_text for t in structural_damage_terms)
+                    or contains_damage_terms(cond_evidence_text)
                     or bool(vision_evidence.visible_damage)
                     or bool(combined_image_metadata.get("visible_damage"))
                 )
@@ -214,7 +206,7 @@ class ReturnsInspectionPipeline:
                 f"Identity Verification ({identity_check.verdict.value}): {identity_check.detail.get('evidence') or identity_check.detail.get('reason') or 'SKU identity verified against order.'}",
                 f"Completeness Verification ({completeness_check.verdict.value}): {completeness_check.detail.get('evidence') or completeness_check.detail.get('reason') or 'All BOM components verified.'}",
                 f"Condition Assessment ({condition_check.verdict.value}): {condition_check.detail.get('amazon_condition', 'Inspected')} - {condition_check.detail.get('evidence') or condition_check.detail.get('reason') or 'Physical condition verified.'}",
-                f"Disposition Policy: {outcome.reason}"
+                f"Disposition Policy: {outcome.reason}",
             ]
 
             record = EvidenceRecord(
@@ -271,7 +263,7 @@ class ReturnsInspectionPipeline:
             fallback_reasoning = [
                 f"Fail-open safeguard engaged due to {type(exc).__name__}",
                 "Automated inspection halted to prevent unauthorized disposition",
-                "Preserved for human supervisor triage"
+                "Preserved for human supervisor triage",
             ]
             record = EvidenceRecord(
                 record_id=record_id,

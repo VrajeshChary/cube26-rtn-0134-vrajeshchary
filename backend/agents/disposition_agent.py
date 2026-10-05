@@ -10,10 +10,10 @@ Policy-governed engine returning strictly one of:
 Applies strict commercial and safety guardrails across identity, completeness, and condition.
 """
 
-import re
 from typing import Optional
 from ..catalog import ProductDefinition
 from ..models import AmazonCondition, CheckResult, CheckVerdict, DispositionDecision, Outcome
+from ..utils import is_non_product_media
 
 
 class DispositionAgent:
@@ -31,13 +31,6 @@ class DispositionAgent:
         id_detail = identity_check.detail or {}
         v_detail = vision_check.detail if vision_check else {}
 
-        non_product_terms = [
-            "logo", "screenshot", "document", "graphic", "invoice",
-            "unrelated media", "non-product image", "non-product", "non product",
-            "screengrab", "receipt", "shipping label", "paper", "label sheet",
-            "blank screen", "clipart", "wallpaper", "illustration",
-        ]
-
         is_non_prod = False
         if id_detail.get("physical_product_detected") is False or v_detail.get("physical_product_detected") is False:
             is_non_prod = True
@@ -52,12 +45,8 @@ class DispositionAgent:
                 str(v_detail.get("detected_product") or ""),
                 str(v_detail.get("image_analyzed") or ""),
                 str(v_detail.get("uncertainty_notes") or ""),
-            ]).lower()
-
-            for term in non_product_terms:
-                if re.search(r'\b' + re.escape(term) + r'\b', combined_texts):
-                    is_non_prod = True
-                    break
+            ])
+            is_non_prod = is_non_product_media(combined_texts)
 
         if is_non_prod:
             return Outcome(

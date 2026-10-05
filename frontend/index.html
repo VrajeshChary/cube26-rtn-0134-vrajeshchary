@@ -3,723 +3,328 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Returns Inspection Assistant</title>
-  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="favicon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <title>Returns Manager · Testing Console</title>
+  <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="styles.css">
-  <!-- Deployed Backend URL Configuration for Vercel / Cloud Hosting -->
-  <script>
-    // Automatic backend resolution: empty string for local dev, Railway backend URL in production
-    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    window.API_BASE_URL = window.API_BASE_URL || (isLocal ? "" : "https://cube26-rtn-0134-vrajeshchary-production.up.railway.app");
-  </script>
 </head>
 <body>
-  <div class="app-shell">
-    <!-- Clean Enterprise Header -->
-    <header class="app-header">
-      <div class="header-brand">
-        <div class="header-icon-box">
-          <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-          </svg>
-        </div>
-        <div class="header-titles">
-          <h1 class="header-title">AI Returns Inspection Assistant</h1>
-          <p class="header-subtitle">Analyze returned products and generate evidence-backed disposition decisions.</p>
-        </div>
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="brand-badge">POD 04</span>
+      <h1 class="brand-title">Returns Manager</h1>
+      <span class="brand-sub">Operational Testing Console</span>
+    </div>
+    <div class="header-controls">
+      <div id="apiStatusPill" class="status-pill status-connecting" title="Backend connection status">
+        <span class="status-dot"></span>
+        <span id="apiStatusText">Connecting...</span>
       </div>
-
-      <div class="header-actions">
-        <!-- Live Gemini Vision Telemetry Pill -->
-        <button type="button" id="visionSetupBadge" class="vision-status-pill" title="View Vision AI Configuration & Providers">
-          <span class="status-indicator-dot dot-active" id="setupIndicatorDot"></span>
-          <span id="visionSetupText" class="status-text">Gemini Vision: Active</span>
-        </button>
-
-        <!-- 50-Unit Benchmark Launcher -->
-        <button id="runEvalBtn" class="btn-eval" title="Execute dual-annotator 50-unit evaluation benchmark suite">
-          <svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
-          </svg>
-          <span>50-Unit Benchmark</span>
-          <kbd class="kbd-hint">⌥E</kbd>
-        </button>
+      <div id="visionStatusPill" class="status-pill status-offline" title="Vision provider status">
+        <span class="status-dot"></span>
+        <span id="visionStatusText">Vision: Checking</span>
       </div>
-    </header>
+      <button id="btnBenchmark" class="btn btn-secondary btn-sm" title="Run 50-Unit Ground Truth Benchmark">
+        Run 50-Unit Benchmark
+      </button>
+    </div>
+  </header>
 
-    <!-- Main Workspace Layout -->
-    <main class="main-layout">
-      <!-- Left Panel: Simplified Inbound Return Upload -->
-      <aside class="left-panel">
-        <div class="panel-card upload-station-card">
-          <!-- Return Order ID (Optional) -->
-          <div class="order-id-group">
-            <label for="orderIdInput" class="order-id-label">
-              <span>Return Order ID</span>
-              <span class="label-optional">Optional</span>
-            </label>
-            <div class="order-input-wrapper">
-              <svg class="order-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
-              <input type="text" id="orderIdInput" class="order-id-input" placeholder="e.g. ORD-847291" autocomplete="off" spellcheck="false">
-            </div>
-            <p class="order-id-helper">Used to retrieve the expected product for identity verification.</p>
+  <main class="console-layout">
+    <aside class="sidebar">
+      <section class="panel-section">
+        <h2 class="section-title">Inbound Return Input</h2>
+        <div class="form-group">
+          <label for="skuSelect">Ordered Product Specification</label>
+          <select id="skuSelect" class="form-control">
+            <option value="SKU-LAMP-LED">Loading products from catalogue...</option>
+          </select>
+          <div id="skuBomInfo" class="meta-tip">BOM: LED lamp arm & head, base clamp, USB cable, manual</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col">
+            <label for="orderIdInput">Order ID</label>
+            <input type="text" id="orderIdInput" class="form-control" value="ORD-78421">
           </div>
+          <div class="form-group col">
+            <label for="unitIdInput">Unit Serial / ID</label>
+            <input type="text" id="unitIdInput" class="form-control" value="UNIT-89102">
+          </div>
+        </div>
 
-          <!-- STEP 1: Upload Return Image -->
-          <div class="step-container">
-            <div class="step-header">
-              <span class="step-badge">STEP 1</span>
-              <h2 class="step-title">Upload Return Image</h2>
+        <div class="form-group">
+          <label>Return Parcel Image</label>
+          <div id="dropZone" class="drop-zone">
+            <input type="file" id="fileInput" accept="image/*" class="file-input-hidden">
+            <div id="dropPrompt" class="drop-prompt">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span>Drag & drop image or <strong>browse</strong></span>
             </div>
-
-            <!-- Upload Drop Area -->
-            <div class="image-dropzone" id="dropzone">
-              <input type="file" id="imageInput" accept="image/*" class="file-input">
-              <div id="previewArea" class="preview-area">
-                <div class="upload-prompt">
-                  <div class="upload-icon-circle">
-                    <svg class="upload-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                  </div>
-                  <h3 class="upload-heading">Upload a photo of the returned product</h3>
-                  <p class="upload-subtext">Drag and drop or click to browse local files</p>
-                </div>
+            <div id="previewContainer" class="preview-container hidden">
+              <img id="imagePreview" alt="Return preview">
+              <div class="preview-info">
+                <span id="previewFilename">image.jpg</span>
+                <span id="previewSize">-- KB</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- STEP 2: Run Inspection -->
-          <div class="step-container" style="margin-top: 1.25rem;">
-            <div class="step-header">
-              <span class="step-badge">STEP 2</span>
-              <h2 class="step-title">Run Inspection</h2>
-            </div>
-
-            <button id="inspectBtn" class="btn-primary-analyze">
-              <span class="btn-analyze-content">
-                <svg class="btn-play-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="6 4 20 12 6 20 6 4"></polygon>
-                </svg>
-                <span class="btn-analyze-text">Analyze Return with AI</span>
-              </span>
-              <kbd class="kbd-analyze">⌘↵</kbd>
+        <div class="action-buttons">
+          <button id="btnInspect" class="btn btn-primary btn-block">
+            Run Multi-Agent Inspection
+          </button>
+          <div class="button-row">
+            <button id="btnLoadSample" class="btn btn-secondary btn-sm col">
+              Load Sample Image
+            </button>
+            <button id="btnClear" class="btn btn-outline btn-sm col">
+              Clear
             </button>
           </div>
         </div>
+      </section>
 
-        <!-- Helpful Assistant Tip -->
-        <div class="assistant-note-card">
-          <div class="note-icon">💡</div>
-          <div class="note-text">
-            <strong>Operator Assistant:</strong> The vision model automatically extracts product type, brand, accessories, packaging state, and cosmetic defects directly from the photo.
+      <section class="panel-section quick-suite-section">
+        <h2 class="section-title">Quick Adversarial Test Suite</h2>
+        <div class="quick-grid">
+          <button class="btn-scenario" data-test="tc1_correct_product">
+            <span class="sc-title">1. Correct Product</span>
+            <span class="sc-badge badge-pass">RESTOCK</span>
+          </button>
+          <button class="btn-scenario" data-test="tc2_wrong_product">
+            <span class="sc-title">2. Wrong Product</span>
+            <span class="sc-badge badge-review">REVIEW</span>
+          </button>
+          <button class="btn-scenario" data-test="tc5_damaged_product">
+            <span class="sc-title">3. Damaged Product</span>
+            <span class="sc-badge badge-dispose">DISPOSE</span>
+          </button>
+          <button class="btn-scenario" data-test="tc6_missing_component">
+            <span class="sc-title">4. Missing Component</span>
+            <span class="sc-badge badge-refurb">REFURBISH</span>
+          </button>
+          <button class="btn-scenario" data-test="tc4_blurry_image">
+            <span class="sc-title">5. Blurry Image</span>
+            <span class="sc-badge badge-review">REVIEW</span>
+          </button>
+          <button class="btn-scenario" data-test="test_non_product">
+            <span class="sc-title">6. Non-Product Image</span>
+            <span class="sc-badge badge-review">REJECT</span>
+          </button>
+          <button class="btn-scenario" data-test="tc7_ambiguous_product">
+            <span class="sc-title">7. Ambiguous / Multi</span>
+            <span class="sc-badge badge-review">REVIEW</span>
+          </button>
+          <button class="btn-scenario" data-test="test_api_failure">
+            <span class="sc-title">8. API Failure Safe</span>
+            <span class="sc-badge badge-failopen">FAIL-OPEN</span>
+          </button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="main-content">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <h3>Ready for Inbound Return Verification</h3>
+        <p>Select a product SKU, upload or drop a parcel photo (or load the sample desk lamp), and trigger the 5-stage agent pipeline.</p>
+      </div>
+
+      <div id="loadingState" class="loading-state hidden">
+        <div class="spinner"></div>
+        <h3 id="loadingTitle">Running Multimodal Vision & Agents...</h3>
+        <p id="loadingDesc">Analyzing image features with Gemini 2.5 Flash, matching BOM components, and evaluating condition rules.</p>
+      </div>
+
+      <div id="errorState" class="error-banner hidden">
+        <div class="error-header">
+          <strong id="errorTitle">Inspection Error</strong>
+          <button id="btnCloseError" class="btn-icon">&times;</button>
+        </div>
+        <p id="errorMessage">An unexpected error occurred.</p>
+      </div>
+
+      <div id="resultsArea" class="results-area hidden">
+        <div id="heroCard" class="hero-decision-card disposition-pending_review">
+          <div class="hero-meta-bar">
+            <div class="meta-left">
+              <span class="meta-label">FINAL DISPOSITION VERDICT</span>
+              <span id="recordStatusPill" class="badge-status">COMPLETED</span>
+            </div>
+            <div class="meta-right">
+              <span id="latencyBadge" class="telemetry-pill">Latency: -- ms</span>
+              <span id="sourceBadge" class="telemetry-pill">Model: --</span>
+            </div>
+          </div>
+          <div class="hero-verdict-row">
+            <div id="decisionBadge" class="decision-text">PENDING_REVIEW</div>
+          </div>
+          <p id="decisionReason" class="decision-reason">Evaluating evidence...</p>
+        </div>
+
+        <div class="agent-grid">
+          <div class="agent-card" id="cardIdentity">
+            <div class="card-header">
+              <span class="card-title">1. Product Identity</span>
+              <span id="verdictIdentity" class="verdict-tag verdict-pass">PASS</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Confidence</span>
+              <strong id="confIdentity">--</strong>
+            </div>
+            <p id="reasonIdentity" class="card-reason">Awaiting check...</p>
+            <div id="detailsIdentity" class="card-subdetails"></div>
+          </div>
+
+          <div class="agent-card" id="cardCompleteness">
+            <div class="card-header">
+              <span class="card-title">2. Parts Completeness</span>
+              <span id="verdictCompleteness" class="verdict-tag verdict-pass">PASS</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Missing Parts</span>
+              <strong id="missingCompleteness">None</strong>
+            </div>
+            <p id="reasonCompleteness" class="card-reason">Awaiting check...</p>
+            <div id="detailsCompleteness" class="card-subdetails"></div>
+          </div>
+
+          <div class="agent-card" id="cardCondition">
+            <div class="card-header">
+              <span class="card-title">3. Physical Condition</span>
+              <span id="verdictCondition" class="verdict-tag verdict-pass">PASS</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Amazon Grade</span>
+              <strong id="gradeCondition">--</strong>
+            </div>
+            <p id="reasonCondition" class="card-reason">Awaiting check...</p>
+            <div id="detailsCondition" class="card-subdetails"></div>
+          </div>
+
+          <div class="agent-card" id="cardDisposition">
+            <div class="card-header">
+              <span class="card-title">4. Policy Disposition</span>
+              <span id="verdictDisposition" class="verdict-tag verdict-pass">PASS</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Decided By</span>
+              <strong id="decidedBy">agent:cube-04</strong>
+            </div>
+            <p id="reasonDisposition" class="card-reason">Awaiting policy rule...</p>
+            <div id="detailsDisposition" class="card-subdetails"></div>
           </div>
         </div>
-      </aside>
 
-      <!-- Right Panel: Inspection Results & Recommendations -->
-      <section class="results-panel">
-        <!-- Initial Empty State (Operational) -->
-        <div id="initialStateCard" class="state-card initial-welcome-card">
-          <div class="welcome-icon-box">
-            <svg class="welcome-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-              <line x1="12" y1="22.08" x2="12" y2="12"></line>
-            </svg>
-          </div>
-          <h2 class="welcome-title">Ready for Inspection</h2>
-          <p class="welcome-desc">Upload a returned product image.</p>
-          <div class="welcome-guidance-card">
-            <div class="guidance-heading">The AI will:</div>
-            <ul class="guidance-checklist">
-              <li><span class="feature-check">✓</span> Identify the product</li>
-              <li><span class="feature-check">✓</span> Verify expected components</li>
-              <li><span class="feature-check">✓</span> Assess physical condition</li>
-              <li><span class="feature-check">✓</span> Recommend warehouse action</li>
-            </ul>
-          </div>
-          <div class="evidence-guarantee-pill">
-            <span class="guarantee-icon">🛡️</span>
-            <span>No decision is made without visual evidence.</span>
+        <div class="evidence-panel">
+          <h3 class="panel-header">Vision Observable Evidence</h3>
+          <div class="evidence-grid">
+            <div class="evidence-item">
+              <span class="evidence-label">Detected Item</span>
+              <span id="evProduct" class="evidence-val">--</span>
+            </div>
+            <div class="evidence-item">
+              <span class="evidence-label">Detected Brand</span>
+              <span id="evBrand" class="evidence-val">--</span>
+            </div>
+            <div class="evidence-item">
+              <span class="evidence-label">Packaging State</span>
+              <span id="evPackaging" class="evidence-val">--</span>
+            </div>
+            <div class="evidence-item">
+              <span class="evidence-label">Visual Confidence</span>
+              <span id="evConfidence" class="evidence-val">--</span>
+            </div>
+            <div class="evidence-item full-width">
+              <span class="evidence-label">Visible Parts</span>
+              <div id="evParts" class="tag-cloud"></div>
+            </div>
+            <div class="evidence-item full-width">
+              <span class="evidence-label">Observable Physical Damage</span>
+              <div id="evDamage" class="tag-cloud"></div>
+            </div>
+            <div id="evUncertaintyWrap" class="evidence-item full-width hidden">
+              <span class="evidence-label text-warning">Uncertainty Notes</span>
+              <span id="evUncertainty" class="evidence-val text-warning"></span>
+            </div>
           </div>
         </div>
 
-        <!-- AI Analysis Progress Card (Visible during analysis) -->
-        <div id="analyzingCard" class="state-card analysis-progress-card hidden">
-          <div class="progress-spinner-wrap">
-            <div class="progress-spinner"></div>
+        <div class="trace-panel">
+          <div class="trace-header">
+            <h3 class="panel-header">Tamper-Evident SHA-256 Audit Seal</h3>
+            <button id="btnToggleJson" class="btn btn-outline btn-xs">View Raw JSON Contract</button>
           </div>
-          <h3 class="progress-title">Analyzing Return with Gemini Vision AI</h3>
-          <p id="progressStepText" class="progress-step-text">Analyzing image...</p>
-          <div class="latency-telemetry-badge" style="margin-bottom: 1.15rem;">
-            <span class="latency-item">Vision: <strong id="analyzingVisionSec">3.2s</strong></span>
-            <span class="latency-sep">·</span>
-            <span class="latency-item">Decision engine: <strong id="analyzingEngineSec">0.04s</strong></span>
-            <span class="latency-sep">·</span>
-            <span class="latency-item">Total: <strong id="analyzingTotalSec">3.24s</strong></span>
+          <div class="trace-grid">
+            <div><span class="trace-label">Record ID:</span> <code id="traceRecordId">--</code></div>
+            <div><span class="trace-label">Unit ID:</span> <code id="traceUnitId">--</code></div>
+            <div><span class="trace-label">Order ID:</span> <code id="traceOrderId">--</code></div>
+            <div><span class="trace-label">Tenant Org:</span> <code id="traceOrgId">--</code></div>
+            <div class="full-width hash-row">
+              <span class="trace-label">SHA-256 Seal:</span>
+              <code id="traceHash" class="hash-code">--</code>
+              <button id="btnCopyHash" class="btn btn-outline btn-xs">Copy</button>
+            </div>
           </div>
-          <div class="analysis-steps-list">
-            <div class="analysis-step-item" id="pStep1"><span>1. Analyzing image...</span></div>
-            <div class="analysis-step-item" id="pStep2"><span>2. Gemini Vision processing...</span></div>
-            <div class="analysis-step-item" id="pStep3"><span>3. Checking identity & catalog match...</span></div>
-            <div class="analysis-step-item" id="pStep4"><span>4. Checking completeness & parts...</span></div>
-            <div class="analysis-step-item" id="pStep5"><span>5. Assessing physical condition...</span></div>
-            <div class="analysis-step-item" id="pStep6"><span>6. Generating disposition recommendation...</span></div>
-          </div>
+          <pre id="rawJsonBlock" class="raw-json-block hidden"></pre>
         </div>
 
-        <!-- Actual Results Container (Visible after analysis) -->
-        <div id="resultsContainer" class="results-container hidden">
-          <!-- 1. FINAL DECISION CARD (Biggest Element) -->
-          <div id="dispositionHero" class="disposition-hero disposition-restock">
-            <div class="hero-left-accent"></div>
-            <div class="hero-body">
-              <div class="decision-kicker">
-                <span class="kicker-dot"></span>
-                <span class="kicker-title">RETURN DECISION</span>
-              </div>
-              <div class="decision-headline-wrap">
-                <h1 id="dispDecision" class="decision-main-title">RESTOCK</h1>
-                <span id="dispStatusBadge" class="verdict-tag tag-pass">READY</span>
-              </div>
-              <p id="dispReason" class="decision-reason-text">
-                Product matches order, all components present, and condition is suitable for resale.
-              </p>
-              <div class="decision-actions-bar">
-                <button type="button" id="overrideToggleBtn" class="btn-pill-action">
-                  <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                  </svg>
-                  <span>Supervisor Override</span>
-                </button>
-                <button type="button" id="viewJsonBtn" class="btn-pill-action">
-                  <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                  </svg>
-                  <span>View Evidence Record (JSON)</span>
-                </button>
-                <button type="button" id="downloadJsonBtn" class="btn-pill-action">
-                  <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  <span>Download Audit Record</span>
-                </button>
-              </div>
-
-              <!-- Latency Telemetry Row -->
-              <div class="latency-telemetry-badge" style="margin-top: 0.85rem;" id="resultsLatencyBadge">
-                <span class="latency-item">Vision: <strong id="resLatencyVision">3.2s</strong></span>
-                <span class="latency-sep">·</span>
-                <span class="latency-item">Decision engine: <strong id="resLatencyEngine">0.04s</strong></span>
-                <span class="latency-sep">·</span>
-                <span class="latency-item">Total: <strong id="resLatencyTotal">3.24s</strong></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Explicit Failure State Card (Shown for unclear images, non-product images, API failures) -->
-          <div id="inspectionFailureCard" class="failure-state-card hidden">
-            <div class="failure-header">
-              <div class="failure-icon-wrap" id="failureIconWrap">
-                <svg class="failure-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-              </div>
-              <div>
-                <h3 class="failure-title" id="failureTitle">INSPECTION BLOCKED</h3>
-                <span class="failure-status-badge" id="failureStatusBadge">PENDING REVIEW</span>
-              </div>
-            </div>
-            <div class="failure-body">
-              <div class="failure-info-row">
-                <span class="failure-label" id="failureKey1">Reason:</span>
-                <span class="failure-value" id="failureVal1">Image quality insufficient.</span>
-              </div>
-              <div class="failure-info-row">
-                <span class="failure-label" id="failureKey2">Action:</span>
-                <span class="failure-value" id="failureVal2">Upload a clearer image showing the complete product.</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Non-physical Product Alert (Shown only when non-physical media detected) -->
-          <div id="nonPhysicalAlert" class="non-physical-alert hidden">
-            <div class="alert-icon-box">
-              <svg class="alert-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-            </div>
-            <div class="alert-body">
-              <div class="alert-headline">Not a physical return item</div>
-              <div class="alert-explanation" id="nonPhysicalReasonText">
-                Gemini vision detected non-product media (logo, screenshot, document, or unrelated graphic). Disposition safely routed to PENDING REVIEW.
-              </div>
-            </div>
-          </div>
-
-          <!-- Decision Trace Section (Step-by-step pipeline trace) -->
-          <div class="card-decision-trace" id="decisionTraceCard">
-            <div class="trace-header">
-              <div class="trace-title-group">
-                <svg class="trace-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-                <div>
-                  <h3 class="trace-main-title">Decision Trace</h3>
-                  <p class="trace-subtitle">Step-by-step audit path leading to final warehouse routing</p>
-                </div>
-              </div>
-              <span class="trace-flow-label">Evidence Pipeline Trace</span>
-            </div>
-
-            <div class="trace-flow-container">
-              <!-- Step 1: Input Evidence -->
-              <div class="trace-step-item" id="traceStepInput">
-                <div class="step-status-icon status-ok" id="traceInputIcon">✓</div>
-                <div class="step-main">
-                  <div class="step-label-row">
-                    <span class="step-name">Input Evidence</span>
-                    <span class="step-confidence mono-bold" id="traceInputConf">100%</span>
-                  </div>
-                  <div class="step-reason" id="traceInputReason">Real parcel return image uploaded</div>
-                </div>
-              </div>
-              <div class="trace-arrow">↓</div>
-
-              <!-- Step 2: Gemini Vision Analysis -->
-              <div class="trace-step-item" id="traceStepVision">
-                <div class="step-status-icon status-ok" id="traceVisionIcon">✓</div>
-                <div class="step-main">
-                  <div class="step-label-row">
-                    <span class="step-name">Gemini Vision Analysis</span>
-                    <span class="step-confidence mono-bold" id="traceVisionConf">95%</span>
-                  </div>
-                  <div class="step-reason" id="traceVisionReason">Physical product detected</div>
-                </div>
-              </div>
-              <div class="trace-arrow">↓</div>
-
-              <!-- Step 3: Identity Verification -->
-              <div class="trace-step-item" id="traceStepIdentity">
-                <div class="step-status-icon status-ok" id="traceIdentityIcon">✓</div>
-                <div class="step-main">
-                  <div class="step-label-row">
-                    <span class="step-name">Identity Verification</span>
-                    <span class="step-confidence mono-bold" id="traceIdentityConf">98%</span>
-                  </div>
-                  <div class="step-reason" id="traceIdentityReason">SKU matches observed product</div>
-                </div>
-              </div>
-              <div class="trace-arrow">↓</div>
-
-              <!-- Step 4: Completeness Verification -->
-              <div class="trace-step-item" id="traceStepCompleteness">
-                <div class="step-status-icon status-ok" id="traceCompletenessIcon">✓</div>
-                <div class="step-main">
-                  <div class="step-label-row">
-                    <span class="step-name">Completeness Verification</span>
-                    <span class="step-confidence mono-bold" id="traceCompletenessConf">96%</span>
-                  </div>
-                  <div class="step-reason" id="traceCompletenessReason">All mandatory components confirmed</div>
-                </div>
-              </div>
-              <div class="trace-arrow">↓</div>
-
-              <!-- Step 5: Condition Assessment -->
-              <div class="trace-step-item" id="traceStepCondition">
-                <div class="step-status-icon status-ok" id="traceConditionIcon">✓</div>
-                <div class="step-main">
-                  <div class="step-label-row">
-                    <span class="step-name">Condition Assessment</span>
-                    <span class="step-confidence mono-bold" id="traceConditionConf">92%</span>
-                  </div>
-                  <div class="step-reason" id="traceConditionReason">Used - Like New</div>
-                </div>
-              </div>
-              <div class="trace-arrow">↓</div>
-
-              <!-- Step 6: Disposition Policy -->
-              <div class="trace-step-item" id="traceStepPolicy">
-                <div class="step-status-icon status-ok" id="tracePolicyIcon">✓</div>
-                <div class="step-main">
-                  <div class="step-label-row">
-                    <span class="step-name">Disposition Policy</span>
-                    <span class="step-confidence mono-bold" id="tracePolicyConf">100%</span>
-                  </div>
-                  <div class="step-reason" id="tracePolicyReason">Warehouse return rule applied</div>
-                </div>
-              </div>
-              <div class="trace-arrow">↓</div>
-
-              <!-- Final Trace Decision Outcome -->
-              <div class="trace-final-card" id="traceFinalCard">
-                <span class="final-prefix">Final Decision:</span>
-                <span class="final-arrow">→</span>
-                <strong class="final-disposition-text" id="traceFinalDecision">RESTOCK</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- Evidence Integrity Panel (Strong Differentiator) -->
-          <div class="evidence-integrity-card" id="evidenceIntegrityCard">
-            <div class="integrity-header">
-              <div class="integrity-title-group">
-                <svg class="integrity-shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                  <polyline points="9 12 11 14 15 10"></polyline>
-                </svg>
-                <div>
-                  <h4 class="integrity-title">Evidence Integrity</h4>
-                  <span class="integrity-sub">Cryptographically Sealed Audit Trail</span>
-                </div>
-              </div>
-              <span class="integrity-hash-badge" id="integrityHashPreview">SHA-256 Verified</span>
-            </div>
-            <ul class="integrity-checklist">
-              <li><span class="chk-icon">✓</span> Real image analyzed</li>
-              <li><span class="chk-icon">✓</span> Gemini Vision response received</li>
-              <li><span class="chk-icon">✓</span> No catalogue-only decision</li>
-              <li><span class="chk-icon">✓</span> No fallback output used</li>
-              <li><span class="chk-icon">✓</span> SHA-256 evidence sealed</li>
-            </ul>
-          </div>
-
-          <!-- Decision Evidence: Why this decision? -->
-          <div id="decisionEvidenceCard" class="decision-evidence-card">
-            <div class="evidence-header">
-              <div class="evidence-title-group">
-                <div class="evidence-icon-circle">
-                  <svg class="evidence-title-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="evidence-main-title">Why this decision?</h3>
-                  <p class="evidence-subtitle">Evidence bullets synthesized directly from automated multimodal vision and compliance checks</p>
-                </div>
-              </div>
-              <span class="evidence-count-badge" id="evidenceCountBadge">5 Verification Points</span>
-            </div>
-            <ul id="evidenceBulletsList" class="evidence-bullets-list">
-              <!-- Dynamically populated 3-5 bullets from actual checks -->
-            </ul>
-          </div>
-
-          <!-- Supervisor Override Drawer Form -->
-          <div id="overrideCard" class="override-drawer hidden">
-            <div class="drawer-header">
-              <h3 class="drawer-title">Supervisor Disposition Override</h3>
-              <button id="closeOverrideBtn" class="btn-close" aria-label="Close override drawer">&times;</button>
-            </div>
-            <div class="override-grid">
-              <div class="override-field">
-                <label for="overrideDecision" class="field-label">Revised Decision</label>
-                <select id="overrideDecision" class="field-select">
+        <div class="override-panel">
+          <h3 class="panel-header">Supervisor Disposition Override</h3>
+          <div class="override-form">
+            <div class="form-row">
+              <div class="form-group col">
+                <label for="overrideDecision">Revised Decision</label>
+                <select id="overrideDecision" class="form-control">
                   <option value="restock">RESTOCK</option>
                   <option value="refurbish">REFURBISH</option>
                   <option value="liquidate">LIQUIDATE</option>
                   <option value="dispose">DISPOSE</option>
-                  <option value="pending_review">PENDING REVIEW</option>
+                  <option value="pending_review">PENDING_REVIEW</option>
                 </select>
               </div>
-              <div class="override-field">
-                <label for="overrideOperator" class="field-label">Supervisor ID</label>
-                <input type="text" id="overrideOperator" class="field-input" placeholder="supervisor_id">
+              <div class="form-group col">
+                <label for="overrideOperator">Supervisor ID</label>
+                <input type="text" id="overrideOperator" class="form-control" value="sup_ops_lead">
               </div>
             </div>
-            <div class="override-field" style="margin-top: 0.75rem;">
-              <label for="overrideReason" class="field-label">Mandatory Justification Reason</label>
-              <input type="text" id="overrideReason" class="field-input" placeholder="Explain rationale for revised disposition...">
+            <div class="form-group">
+              <label for="overrideReason">Audit Justification / Bench Notes</label>
+              <input type="text" id="overrideReason" class="form-control" placeholder="Detailed reason for overriding agent disposition...">
             </div>
-            <button id="submitOverrideBtn" class="btn-commit-override">
-              Sign & Save Override Record
+            <button id="btnSubmitOverride" class="btn btn-secondary btn-sm">
+              Apply Immutable Override & Reseal
             </button>
           </div>
-
-          <!-- 2. AI VISUAL INSPECTION (Simplified Vision Evidence Card) -->
-          <div class="card-visual-inspection" id="cardVision">
-            <div class="section-card-header">
-              <div class="section-title-wrap">
-                <div class="section-dot dot-blue"></div>
-                <h3 class="section-title">AI Visual Inspection</h3>
-              </div>
-              <div class="section-badge-wrap">
-                <span class="confidence-badge">Confidence: <strong id="visionConfidence" class="mono-bold">95%</strong></span>
-              </div>
-            </div>
-
-            <div class="visual-details-grid">
-              <div class="detail-cell" id="physicalProductCell">
-                <span class="detail-label">Physical Product Classification</span>
-                <span id="visionPhysicalProduct" class="detail-value text-green">
-                  <span class="status-pill-pass">physical_product_detected: true</span>
-                </span>
-              </div>
-              <div class="detail-cell">
-                <span class="detail-label">Detected Product</span>
-                <span id="visionProduct" class="detail-value text-strong">LED Desk Lamp</span>
-              </div>
-              <div class="detail-cell">
-                <span class="detail-label">Visible Components</span>
-                <div id="visionVisibleParts" class="detail-value parts-pill-row">
-                  <span class="item-pill">Lamp Body</span>
-                  <span class="item-pill">USB Cable</span>
-                  <span class="item-pill">Clamp</span>
-                </div>
-              </div>
-              <div class="detail-cell">
-                <span class="detail-label">Condition Observations</span>
-                <span id="visionDamage" class="detail-value text-green">Minor scratches detected</span>
-              </div>
-              <div class="detail-cell">
-                <span class="detail-label">Packaging & Brand</span>
-                <span id="visionPackagingState" class="detail-value">Opened - Original packaging</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. THREE VERIFICATION AGENT CARDS (Product Match, Parts Check, Condition Review) -->
-          <div class="verification-cards-grid">
-            <!-- Card 1: Product Match -->
-            <div class="check-card" id="cardIdentity">
-              <div class="check-header">
-                <div>
-                  <h4 class="check-name">Product Match</h4>
-                  <p class="check-question">Does the returned item match the original order?</p>
-                </div>
-                <span id="identityVerdict" class="verdict-tag tag-pass">PASS</span>
-              </div>
-              <div class="check-body">
-                <p id="identityEvidence" class="check-explanation">Product visual attributes match the catalog SKU.</p>
-              </div>
-              <div class="check-footer">
-                <span class="score-label">Confidence: <span id="identityConfidence" class="mono-bold">96%</span></span>
-              </div>
-            </div>
-
-            <!-- Card 2: Parts Check -->
-            <div class="check-card" id="cardCompleteness">
-              <div class="check-header">
-                <div>
-                  <h4 class="check-name">Parts Check</h4>
-                  <p class="check-question">Are all required components present?</p>
-                </div>
-                <span id="completenessVerdict" class="verdict-tag tag-pass">PASS</span>
-              </div>
-              <div class="check-body">
-                <p id="completenessEvidence" class="check-explanation">All expected BOM components confirmed present in package.</p>
-              </div>
-              <div class="check-footer">
-                <span class="score-label">Confidence: <span id="completenessConfidence" class="mono-bold">100%</span></span>
-              </div>
-            </div>
-
-            <!-- Card 3: Condition Review -->
-            <div class="check-card" id="cardCondition">
-              <div class="check-header">
-                <div>
-                  <h4 class="check-name">Condition Review</h4>
-                  <p class="check-question">What condition is the item in?</p>
-                </div>
-                <span id="conditionVerdict" class="verdict-tag tag-pass">PASS</span>
-              </div>
-              <div class="check-body">
-                <div class="condition-grade-box">
-                  <span class="grade-label">Amazon Grade:</span>
-                  <strong id="amazonConditionTag" class="grade-value">Used - Like New</strong>
-                </div>
-                <p id="conditionEvidence" class="check-explanation">Light package wear; main unit pristine with complete functionality.</p>
-              </div>
-              <div class="check-footer">
-                <span class="score-label">Classification: Amazon Taxonomy</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Small Professional Disclaimer Footer -->
-    <footer class="app-footer">
-      <p class="footer-disclaimer">
-        AI recommendation. Ambiguous cases are routed for human review.
-      </p>
-    </footer>
-
-    <!-- Full Evidence Record (JSON Contract) Modal -->
-    <div id="jsonModal" class="modal-overlay hidden">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-header">
-          <div>
-            <h3 class="modal-title">Evidence Record Contract</h3>
-            <p class="modal-subtitle">Full cryptographic JSON audit trail with deterministic SHA-256 seal</p>
-          </div>
-          <button id="closeJsonModalBtn" class="btn-close" aria-label="Close modal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="json-viewer-container">
-            <pre><code id="jsonCodeView">Loading evidence contract...</code></pre>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="copyJsonBtn" class="btn-secondary">Copy JSON</button>
-          <button id="closeJsonModalBtn2" class="btn-primary-small">Close</button>
+          <div id="overrideHistory" class="override-history hidden"></div>
         </div>
       </div>
-    </div>
+    </section>
+  </main>
 
-    <!-- 50-Unit Benchmark Evaluation Modal -->
-    <div id="evalModal" class="modal-overlay hidden">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <div>
-            <h3 class="modal-title">50-Unit Benchmark Evaluation</h3>
-            <p class="modal-subtitle">Dual independent human annotator benchmark with 50 ground truth return cases</p>
-          </div>
-          <button id="closeEvalModal" class="btn-close" aria-label="Close modal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="eval-metrics-grid">
-            <div class="metric-card">
-              <span class="metric-val text-green" id="metricAccuracy">100%</span>
-              <span class="metric-label">Disposition Accuracy</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-val text-green" id="metricRestockFP">0</span>
-              <span class="metric-label">Restock False Positives</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-val text-green" id="metricAgreement">100%</span>
-              <span class="metric-label">Annotator Agreement</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-val text-amber" id="metricUncertainty">14%</span>
-              <span class="metric-label">Review Guard Rate</span>
-            </div>
-          </div>
-
-          <div class="check-breakdown-table">
-            <h4 class="table-heading">Check-Level Verification Breakdown</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>Check Agent</th>
-                  <th>Accuracy</th>
-                  <th>Standard Scale</th>
-                  <th>Uncertainty Guard</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Product Match</td>
-                  <td class="text-green mono-bold">100.0%</td>
-                  <td>PASS / FAIL / UNCERTAIN</td>
-                  <td>Strict No-Guessing</td>
-                </tr>
-                <tr>
-                  <td>Parts Check</td>
-                  <td class="text-green mono-bold">100.0%</td>
-                  <td>PASS / FAIL / UNCERTAIN</td>
-                  <td>Affirmative Evidence Only</td>
-                </tr>
-                <tr>
-                  <td>Condition Review</td>
-                  <td class="text-green mono-bold">90.0%</td>
-                  <td>Official Amazon Scale</td>
-                  <td>Ambiguity &rarr; UNCERTAIN</td>
-                </tr>
-                <tr>
-                  <td>Final Decision</td>
-                  <td class="text-green mono-bold">100.0%</td>
-                  <td>5 Allowed Dispositions</td>
-                  <td>Fail-Open Protected</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="closeEvalModalBtn" class="btn-secondary">Close Benchmark</button>
-        </div>
+  <div id="benchmarkModal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>50-Unit Benchmark Ground Truth Evaluation</h3>
+        <button id="btnCloseModal" class="btn-icon">&times;</button>
       </div>
-    </div>
-
-    <!-- Vision Setup Modal -->
-    <div id="setupModal" class="modal-overlay hidden">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <div>
-            <h3 class="modal-title">Gemini Vision AI Configuration</h3>
-            <p class="modal-subtitle">Live multimodal inference pipeline active with offline fallbacks disabled</p>
-          </div>
-          <button id="closeSetupModal" class="btn-close" aria-label="Close modal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="setup-details-grid">
-            <div class="setup-detail-item">
-              <span class="setup-detail-label">Gemini Vision Active</span>
-              <span id="setupGeminiActive" class="setup-detail-val text-green">Checking...</span>
-            </div>
-            <div class="setup-detail-item">
-              <span class="setup-detail-label">Provider</span>
-              <span id="setupProvider" class="setup-detail-val">Checking...</span>
-            </div>
-            <div class="setup-detail-item">
-              <span class="setup-detail-label">Active Model</span>
-              <span id="setupModel" class="setup-detail-val">Checking...</span>
-            </div>
-            <div class="setup-detail-item">
-              <span class="setup-detail-label">API Key Configuration</span>
-              <span id="setupKeyPreview" class="setup-detail-val">Checking...</span>
-            </div>
-            <div class="setup-detail-item">
-              <span class="setup-detail-label">.env File Loaded</span>
-              <span id="setupEnvLoaded" class="setup-detail-val text-green">Checking...</span>
-            </div>
-            <div class="setup-detail-item">
-              <span class="setup-detail-label">Offline Fallbacks</span>
-              <span id="setupFallbackStatus" class="setup-detail-val text-red">DISABLED</span>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="closeSetupModalBtn" class="btn-secondary">Close</button>
-        </div>
+      <div id="benchmarkLoading" class="modal-body">
+        <div class="spinner"></div>
+        <p>Executing 50 test units against policy rules...</p>
       </div>
+      <div id="benchmarkResults" class="modal-body hidden"></div>
     </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast hidden">Action completed successfully</div>
   </div>
 
   <script src="app.js"></script>

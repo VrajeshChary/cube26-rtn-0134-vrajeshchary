@@ -130,12 +130,17 @@ CATALOGUE: Dict[str, ProductDefinition] = {
 }
 
 
-def get_product_by_sku(sku: str) -> Optional[ProductDefinition]:
+def get_product_by_sku(sku: Optional[str]) -> Optional[ProductDefinition]:
+    if not sku:
+        return None
     return CATALOGUE.get(sku.strip())
 
 
-def get_product_by_asin(asin: str) -> Optional[ProductDefinition]:
+def get_product_by_asin(asin: Optional[str]) -> Optional[ProductDefinition]:
+    if not asin:
+        return None
+    clean_asin = asin.strip()
     for prod in CATALOGUE.values():
-        if prod.asin == asin.strip():
+        if prod.asin == clean_asin:
             return prod
     return None

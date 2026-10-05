@@ -73,6 +73,7 @@ class InspectionRequest(BaseModel):
     operator_id: Optional[str] = None
     observed_notes: Optional[str] = None
     image_data: Optional[str] = None
+    image_base64: Optional[str] = None
     image_filename: Optional[str] = None
 
 

@@ -13,11 +13,11 @@ Rules:
 - Only marks missing when affirmative evidence supports it -> FAIL.
 """
 
-import re
 import time
 from typing import Any, Dict, List, Optional
 from ..catalog import ProductDefinition
 from ..models import CheckResult, CheckVerdict
+from ..utils import normalize_text
 
 COMPONENT_ALIASES: Dict[str, List[str]] = {
     "lamp": [
@@ -82,19 +82,15 @@ class CompletenessAgent:
     def __init__(self, model_version: str = "completeness-agent-v2.0"):
         self.model_version = model_version
 
-    @staticmethod
-    def _normalize_text(text: str) -> str:
-        return re.sub(r"[^a-z0-9\s]", " ", text.lower()).strip()
-
     def _is_component_confirmed(
         self,
         expected_part: str,
         visible_parts: List[str],
         detected_text: str = "",
     ) -> bool:
-        norm_expected = self._normalize_text(expected_part)
-        norm_vis_list = [self._normalize_text(v) for v in visible_parts if v]
-        extra_norm = self._normalize_text(detected_text) if detected_text else ""
+        norm_expected = normalize_text(expected_part)
+        norm_vis_list = [normalize_text(v) for v in visible_parts if v]
+        extra_norm = normalize_text(detected_text) if detected_text else ""
 
         for v in norm_vis_list:
             if norm_expected == v:
@@ -106,7 +102,7 @@ class CompletenessAgent:
 
         aliases = COMPONENT_ALIASES.get(expected_part.lower(), [])
         for alias in aliases:
-            norm_alias = self._normalize_text(alias)
+            norm_alias = normalize_text(alias)
             for v in norm_vis_list:
                 if norm_alias == v:
                     return True
@@ -178,7 +174,7 @@ class CompletenessAgent:
                         critical_missing.append(p)
                         break
 
-            latency_ms = max(int((time.time() - start_time) * 1000), 16)
+            latency_ms = int((time.time() - start_time) * 1000)
             return CheckResult(
                 check_key="completeness",
                 verdict=CheckVerdict.FAIL,
@@ -196,7 +192,7 @@ class CompletenessAgent:
 
         if has_image:
             if vision_pkg_state == "factory_sealed":
-                latency_ms = max(int((time.time() - start_time) * 1000), 15)
+                latency_ms = int((time.time() - start_time) * 1000)
                 return CheckResult(
                     check_key="completeness",
                     verdict=CheckVerdict.PASS,
@@ -223,7 +219,7 @@ class CompletenessAgent:
             ]
 
             if len(unconfirmed_parts) == 0:
-                latency_ms = max(int((time.time() - start_time) * 1000), 15)
+                latency_ms = int((time.time() - start_time) * 1000)
                 return CheckResult(
                     check_key="completeness",
                     verdict=CheckVerdict.PASS,
@@ -245,7 +241,7 @@ class CompletenessAgent:
             elif vision_pkg_state == "uncertain":
                 reason_suffix = " due to packaging occlusion, obscuration, or camera angle"
 
-            latency_ms = max(int((time.time() - start_time) * 1000), 14)
+            latency_ms = int((time.time() - start_time) * 1000)
             return CheckResult(
                 check_key="completeness",
                 verdict=CheckVerdict.UNCERTAIN,
@@ -263,7 +259,7 @@ class CompletenessAgent:
             )
 
         if operator_state == "factory_sealed":
-            latency_ms = max(int((time.time() - start_time) * 1000), 15)
+            latency_ms = int((time.time() - start_time) * 1000)
             return CheckResult(
                 check_key="completeness",
                 verdict=CheckVerdict.PASS,
@@ -279,7 +275,7 @@ class CompletenessAgent:
             )
 
         if operator_state in ["opened_unused", "signs_of_use", "damaged"] and not operator_missing and not observed_labels.get("unclear_evidence"):
-            latency_ms = max(int((time.time() - start_time) * 1000), 15)
+            latency_ms = int((time.time() - start_time) * 1000)
             return CheckResult(
                 check_key="completeness",
                 verdict=CheckVerdict.PASS,
@@ -294,7 +290,7 @@ class CompletenessAgent:
                 latency_ms=latency_ms,
             )
 
-        latency_ms = max(int((time.time() - start_time) * 1000), 14)
+        latency_ms = int((time.time() - start_time) * 1000)
         return CheckResult(
             check_key="completeness",
             verdict=CheckVerdict.UNCERTAIN,

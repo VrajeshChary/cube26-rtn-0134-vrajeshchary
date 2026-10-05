@@ -14,9 +14,10 @@ Only FAILS when the detected object is genuinely different (e.g. lamp expected v
 
 import re
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from ..catalog import CATALOGUE, ProductDefinition, get_product_by_sku
 from ..models import CheckResult, CheckVerdict
+from ..utils import is_non_product_media, normalize_text
 
 SEMANTIC_TAXONOMY: Dict[str, Dict[str, Any]] = {
     "SKU-LAMP-LED": {
@@ -152,10 +153,21 @@ INCOMPATIBLE_CATEGORIES: Dict[str, Dict[str, Any]] = {
     },
 }
 
+_INCOMPATIBLE_PATTERNS: Dict[str, re.Pattern] = {}
+for _cat_id, _cat_info in INCOMPATIBLE_CATEGORIES.items():
+    _sorted_kw = sorted(_cat_info["keywords"], key=len, reverse=True)
+    _INCOMPATIBLE_PATTERNS[_cat_id] = re.compile(
+        r"\b(?:" + "|".join(re.escape(k) for k in _sorted_kw) + r")\b",
+        re.IGNORECASE,
+    )
 
-def normalize_text(text: str) -> str:
-    """Cleans and standardizes text for semantic token and phrase matching."""
-    return re.sub(r'[^a-z0-9\s-]', ' ', (text or '').lower())
+_TAXONOMY_PATTERNS: Dict[str, Dict[str, List[Tuple[str, re.Pattern]]]] = {}
+for _sku, _tax in SEMANTIC_TAXONOMY.items():
+    _TAXONOMY_PATTERNS[_sku] = {
+        "category_keywords": [(kw, re.compile(r"\b" + re.escape(kw) + r"\b", re.IGNORECASE)) for kw in _tax.get("category_keywords", [])],
+        "key_components": [(comp, [re.compile(r"\b" + re.escape(t) + r"\b", re.IGNORECASE) for t in comp.split() if len(t) > 2]) for comp in _tax.get("key_components", [])],
+        "visual_features": [(feat, re.compile(r"\b" + re.escape(feat) + r"\b", re.IGNORECASE)) for feat in _tax.get("visual_features", []) if len(feat) > 3],
+    }
 
 
 class IdentityAgent:
@@ -208,7 +220,7 @@ class IdentityAgent:
 
         if has_image:
             if wrong_item_detected or (observed_sku and observed_sku != ordered_sku):
-                latency_ms = max(int((time.time() - start_time) * 1000), 12)
+                latency_ms = int((time.time() - start_time) * 1000)
                 return CheckResult(
                     check_key="identity",
                     verdict=CheckVerdict.FAIL,
@@ -232,7 +244,7 @@ class IdentityAgent:
                 )
 
             if not detected_prod or (vision_uncertain and vision_confidence < 0.60):
-                latency_ms = max(int((time.time() - start_time) * 1000), 12)
+                latency_ms = int((time.time() - start_time) * 1000)
                 return CheckResult(
                     check_key="identity",
                     verdict=CheckVerdict.UNCERTAIN,
@@ -263,7 +275,7 @@ class IdentityAgent:
                 image_filename=image_filename,
             )
 
-            latency_ms = max(int((time.time() - start_time) * 1000), 12)
+            latency_ms = int((time.time() - start_time) * 1000)
             is_non_product = semantic_res.get("is_non_product", False)
             return CheckResult(
                 check_key="identity",
@@ -298,7 +310,7 @@ class IdentityAgent:
                     "evidence": f"Operator confirmed item mismatch for SKU {ordered_sku}.",
                 },
                 model_version=self.model_version,
-                latency_ms=max(int((time.time() - start_time) * 1000), 12),
+                latency_ms=int((time.time() - start_time) * 1000),
             )
 
         if identity_signal == "yes":
@@ -314,7 +326,7 @@ class IdentityAgent:
                     "evidence": f"Verified physical bench inspection match for {catalog_product.title}.",
                 },
                 model_version=self.model_version,
-                latency_ms=max(int((time.time() - start_time) * 1000), 12),
+                latency_ms=int((time.time() - start_time) * 1000),
             )
         elif identity_signal == "uncertain" or observed_labels.get("unclear_evidence"):
             return CheckResult(
@@ -327,7 +339,7 @@ class IdentityAgent:
                     "evidence": "Operator marked identity as uncertain; insufficient evidence to verify SKU.",
                 },
                 model_version=self.model_version,
-                latency_ms=max(int((time.time() - start_time) * 1000), 12),
+                latency_ms=int((time.time() - start_time) * 1000),
             )
 
         return CheckResult(
@@ -340,7 +352,7 @@ class IdentityAgent:
                 "evidence": "Catalogue selection alone cannot establish identity without verified visual or physical evidence.",
             },
             model_version=self.model_version,
-            latency_ms=max(int((time.time() - start_time) * 1000), 12),
+            latency_ms=int((time.time() - start_time) * 1000),
         )
 
     def _evaluate_semantic_identity(
@@ -364,67 +376,68 @@ class IdentityAgent:
         visible_parts = visible_parts or []
         norm_detected = normalize_text(detected_prod)
         norm_parts = [normalize_text(p) for p in visible_parts]
-        norm_filename = normalize_text(image_filename or '')
+        norm_filename = normalize_text(image_filename or "")
         combined_text = f"{norm_detected} {' '.join(norm_parts)} {norm_filename}"
 
+        patterns = _TAXONOMY_PATTERNS.get(ordered_sku, {})
         taxonomy = SEMANTIC_TAXONOMY.get(ordered_sku, {})
-        expected_cat_keywords = taxonomy.get("category_keywords", [normalize_text(w) for w in catalog_product.title.split()])
-        expected_components = taxonomy.get("key_components", [normalize_text(p) for p in catalog_product.expected_parts])
-        expected_features = taxonomy.get("visual_features", [normalize_text(w) for w in catalog_product.description.split()])
+
+        norm_title = normalize_text(catalog_product.title)
+        norm_category = normalize_text(catalog_product.category)
 
         for cat_id, cat_info in INCOMPATIBLE_CATEGORIES.items():
             is_expected_in_cat = any(
-                kw in normalize_text(catalog_product.title) or kw in normalize_text(catalog_product.category)
+                kw in norm_title or kw in norm_category
                 for kw in cat_info["keywords"]
             )
             if is_expected_in_cat:
                 continue
 
-            for kw in cat_info["keywords"]:
-                pattern = r'\b' + re.escape(kw) + r'\b'
-                if re.search(pattern, norm_detected) or re.search(pattern, norm_filename):
-                    if cat_id == "non_product":
-                        return {
-                            "verdict": CheckVerdict.FAIL,
-                            "confidence": 0.96,
-                            "is_non_product": True,
-                            "reason": "Invalid return image: non-product media detected. Manual review required.",
-                            "comparison": {
-                                "category": {"match": False, "expected": catalog_product.category, "detected_conflict": cat_info["name"]},
-                                "key_components": {"match": False, "expected": catalog_product.expected_parts, "matched": []},
-                                "brand": {"match": True, "detected": detected_brand or "Not specified"},
-                                "sku_metadata": {"match": False, "ordered_sku": ordered_sku, "matched_sku_tokens": []},
-                                "visual_features": {"match": False, "matched_features": []},
-                            }
-                        }
+            cat_pat = _INCOMPATIBLE_PATTERNS.get(cat_id)
+            if cat_pat and (cat_pat.search(norm_detected) or cat_pat.search(norm_filename)):
+                if cat_id == "non_product":
                     return {
                         "verdict": CheckVerdict.FAIL,
                         "confidence": 0.96,
-                        "reason": f"Product mismatch: Detected '{detected_prod}' ({cat_info['name']}) directly conflicts with expected SKU {ordered_sku} ({catalog_product.title} - {catalog_product.category}). Genuinely different product category.",
+                        "is_non_product": True,
+                        "reason": "Invalid return image: non-product media detected. Manual review required.",
                         "comparison": {
                             "category": {"match": False, "expected": catalog_product.category, "detected_conflict": cat_info["name"]},
                             "key_components": {"match": False, "expected": catalog_product.expected_parts, "matched": []},
                             "brand": {"match": True, "detected": detected_brand or "Not specified"},
                             "sku_metadata": {"match": False, "ordered_sku": ordered_sku, "matched_sku_tokens": []},
                             "visual_features": {"match": False, "matched_features": []},
-                        }
+                        },
                     }
+                return {
+                    "verdict": CheckVerdict.FAIL,
+                    "confidence": 0.96,
+                    "reason": f"Product mismatch: Detected '{detected_prod}' ({cat_info['name']}) directly conflicts with expected SKU {ordered_sku} ({catalog_product.title} - {catalog_product.category}). Genuinely different product category.",
+                    "comparison": {
+                        "category": {"match": False, "expected": catalog_product.category, "detected_conflict": cat_info["name"]},
+                        "key_components": {"match": False, "expected": catalog_product.expected_parts, "matched": []},
+                        "brand": {"match": True, "detected": detected_brand or "Not specified"},
+                        "sku_metadata": {"match": False, "ordered_sku": ordered_sku, "matched_sku_tokens": []},
+                        "visual_features": {"match": False, "matched_features": []},
+                    },
+                }
 
-        matched_cat_keywords = [
-            kw for kw in expected_cat_keywords
-            if re.search(r'\b' + re.escape(kw) + r'\b', combined_text)
+        cat_pairs = patterns.get("category_keywords") or [
+            (w, re.compile(r"\b" + re.escape(w) + r"\b", re.IGNORECASE))
+            for w in norm_title.split()
         ]
+        matched_cat_keywords = [kw for kw, pat in cat_pairs if pat.search(combined_text)]
         category_matched = len(matched_cat_keywords) > 0
 
         if not category_matched:
+            expected_kws = taxonomy.get("category_keywords", [])
             for other_sku, other_tax in SEMANTIC_TAXONOMY.items():
                 if other_sku == ordered_sku:
                     continue
                 other_keywords = other_tax.get("category_keywords", [])
-                other_specific = [k for k in other_keywords if k not in expected_cat_keywords and len(k) > 3]
+                other_specific = [k for k in other_keywords if k not in expected_kws and len(k) > 3]
                 for ok in other_specific:
-                    pattern = r'\b' + re.escape(ok) + r'\b'
-                    if re.search(pattern, norm_detected):
+                    if re.search(r"\b" + re.escape(ok) + r"\b", norm_detected, re.IGNORECASE):
                         other_prod = get_product_by_sku(other_sku)
                         other_title = other_prod.title if other_prod else other_sku
                         return {
@@ -437,15 +450,17 @@ class IdentityAgent:
                                 "brand": {"match": True, "detected": detected_brand or "Not specified"},
                                 "sku_metadata": {"match": False, "ordered_sku": ordered_sku},
                                 "visual_features": {"match": False, "matched_features": []},
-                            }
+                            },
                         }
 
+        comp_pairs = patterns.get("key_components") or [
+            (p, [re.compile(r"\b" + re.escape(t) + r"\b", re.IGNORECASE) for t in normalize_text(p).split() if len(t) > 2])
+            for p in catalog_product.expected_parts
+        ]
         matched_components = []
-        for comp in expected_components:
-            for term in comp.split():
-                if len(term) > 2 and re.search(r'\b' + re.escape(term) + r'\b', combined_text):
-                    matched_components.append(comp)
-                    break
+        for comp_name, term_pats in comp_pairs:
+            if any(tp.search(combined_text) for tp in term_pats):
+                matched_components.append(comp_name)
         matched_components = list(dict.fromkeys(matched_components))
         components_matched = len(matched_components) > 0
 
@@ -460,13 +475,11 @@ class IdentityAgent:
                 brand_note = f"Verified brand: {detected_brand}"
 
         sku_tokens = [tok.lower() for tok in ordered_sku.split("-") if len(tok) > 2 and tok.lower() != "sku"]
-        matched_sku_tokens = [tok for tok in sku_tokens if re.search(r'\b' + re.escape(tok) + r'\b', combined_text)]
+        matched_sku_tokens = [tok for tok in sku_tokens if re.search(r"\b" + re.escape(tok) + r"\b", combined_text, re.IGNORECASE)]
         sku_metadata_matched = len(matched_sku_tokens) > 0 or category_matched
 
-        matched_features = [
-            feat for feat in expected_features
-            if len(feat) > 3 and re.search(r'\b' + re.escape(feat) + r'\b', combined_text)
-        ]
+        feat_pairs = patterns.get("visual_features") or []
+        matched_features = [feat for feat, pat in feat_pairs if pat.search(combined_text)]
         matched_features = list(dict.fromkeys(matched_features))
         features_matched = len(matched_features) > 0
 

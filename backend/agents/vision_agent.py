@@ -3,12 +3,13 @@ import io
 import json
 import logging
 import os
-import re
 import time
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
+
+from ..utils import is_non_product_media
 
 logger = logging.getLogger(__name__)
 
@@ -34,51 +35,91 @@ class VisionEvidence(BaseModel):
     is_fallback: bool = Field(default=False, description="True if fallback / offline failure state was used")
 
 
-class VisionAgent:
-    def __init__(self, model_version: str = "vision-evidence-agent-v3.0"):
-        self.model_version = model_version
-        self.client = None
-        self.provider = "offline"
-        self.active_model = "none"
-        self.api_key = None
+def _build_vision_prompt(catalog_product: Optional[Any]) -> str:
+    """Builds the canonical multimodal prompt for returns inspection."""
+    expected_parts_str = ", ".join(catalog_product.expected_parts) if catalog_product else "Unknown"
+    title_str = catalog_product.title if catalog_product else "General Merchandise"
+    sku_str = catalog_product.sku if catalog_product else "Unknown"
+
+    return f"""You are an expert Warehouse Vision Evidence Inspector for customer returns.
+Analyze ONLY the provided image of the returned item/parcel.
+DO NOT fabricate evidence from catalog specifications or scenario inputs.
+
+Inspection Instructions:
+1. Examine the image and identify the actual physical product pictured.
+   - Describe what is physically visible.
+2. Read any visible brand name or manufacturer markings physically imprinted on the item or packaging.
+3. List in `visible_parts` ONLY components that are clearly visible in the image.
+4. List an item in `missing_candidates` ONLY if there is affirmative visual proof of absence.
+5. List observable physical damage in `visible_damage` (scratches, cracks, tears, dents, broken seals).
+6. Classify packaging_state strictly from physical cues: "factory_sealed", "opened_unused", "signs_of_use", "damaged", or "uncertain".
+7. Set confidence score (0.0 to 1.0) reflecting visual certainty.
+
+Expected Reference for comparison (do NOT invent observations from this reference):
+- Expected Product: {title_str}
+- Expected SKU: {sku_str}
+- Expected Parts: [{expected_parts_str}]
+
+Return ONLY a valid JSON object matching this schema:
+{{
+  "detected_product": "description of item seen",
+  "detected_brand": null,
+  "visible_parts": ["visible parts list"],
+  "missing_candidates": [],
+  "visible_damage": [],
+  "packaging_state": "opened_unused",
+  "uncertainty_notes": null,
+  "confidence": 0.95
+}}
+"""
+
+
+class VisionConfig:
+    """Single authoritative configuration loader for Vision AI providers and credentials."""
+
+    def __init__(self):
         self.env_loaded = False
-        self.env_path = None
-        self._init_multimodal_client()
+        self.env_path = "not_found"
+        self._load_env()
 
-    def check_env_loading(self) -> Dict[str, Any]:
-        """Inspects and returns detailed status of .env loading and API keys."""
-        env_path = Path(__file__).resolve().parent.parent.parent / ".env"
-        file_exists = env_path.exists()
-        
-        openrouter_key = os.environ.get("OPENROUTER_API_KEY")
-        gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        self.openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+        self.gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        self.configured_vision_model = os.environ.get("VISION_MODEL")
+        self.configured_vision_provider = os.environ.get("VISION_PROVIDER")
 
-        active_key = openrouter_key or gemini_key
-        key_preview = None
+        active_key = self.openrouter_key or self.gemini_key
         if active_key and len(active_key) > 14:
-            key_preview = f"{active_key[:10]}...{active_key[-4:]}"
+            self.api_key_preview = f"{active_key[:10]}...{active_key[-4:]}"
         elif active_key:
-            key_preview = "configured"
+            self.api_key_preview = "configured"
+        else:
+            self.api_key_preview = None
 
-        return {
-            "env_loaded": self.env_loaded or file_exists,
-            "env_path": str(env_path) if file_exists else "not_found",
-            "openrouter_key_present": bool(openrouter_key),
-            "gemini_key_present": bool(gemini_key),
-            "api_key_preview": key_preview,
-            "configured_vision_model": os.environ.get("VISION_MODEL"),
-            "configured_vision_provider": os.environ.get("VISION_PROVIDER"),
-        }
+        if self.openrouter_key:
+            self.provider = "OpenRouter"
+            self.api_key = self.openrouter_key
+            req_model = self.configured_vision_model or os.environ.get("OPENROUTER_MODEL") or "google/gemini-2.5-flash"
+            if "nemotron-3-ultra" in req_model:
+                self.active_model = "google/gemini-2.5-flash"
+            else:
+                self.active_model = req_model
+        elif self.gemini_key:
+            self.provider = "Google GenAI"
+            self.api_key = self.gemini_key
+            self.active_model = os.environ.get("GEMINI_MODEL") or "gemini-2.5-flash"
+        else:
+            self.provider = "offline"
+            self.api_key = None
+            self.active_model = "none"
 
-    def _init_multimodal_client(self):
-        """Initializes OpenRouter or Google GenAI multimodal client."""
+    def _load_env(self):
         try:
             import dotenv
-            env_path = Path(__file__).resolve().parent.parent.parent / ".env"
-            if env_path.exists():
-                dotenv.load_dotenv(dotenv_path=env_path, override=True)
+            env_file = Path(__file__).resolve().parent.parent.parent / ".env"
+            if env_file.exists():
+                dotenv.load_dotenv(dotenv_path=env_file, override=True)
                 self.env_loaded = True
-                self.env_path = str(env_path)
+                self.env_path = str(env_file)
             else:
                 dotenv.load_dotenv(override=True)
                 self.env_loaded = True
@@ -86,42 +127,47 @@ class VisionAgent:
         except ImportError:
             pass
 
-        openrouter_key = os.environ.get("OPENROUTER_API_KEY")
-        gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
-        if openrouter_key:
-            self.provider = "OpenRouter"
-            self.api_key = openrouter_key
-            req_model = os.environ.get("VISION_MODEL") or os.environ.get("OPENROUTER_MODEL") or "google/gemini-2.5-flash"
+class VisionAgent:
+    def __init__(self, model_version: str = "vision-evidence-agent-v3.0"):
+        self.model_version = model_version
+        self.client = None
+        self.config = VisionConfig()
 
-            if "nemotron-3-ultra" in req_model:
-                self.active_model = "google/gemini-2.5-flash"
-                logger.info(f"VisionAgent: Selected '{req_model}' does not support image input on OpenRouter. Routing to Google Gemini Vision ('{self.active_model}').")
-            else:
-                self.active_model = req_model
+        self.provider = self.config.provider
+        self.active_model = self.config.active_model
+        self.api_key = self.config.api_key
+        self.env_loaded = self.config.env_loaded
+        self.env_path = self.config.env_path
 
-            logger.info(f"VisionAgent: Active multimodal provider OpenRouter with Google Gemini (model: {self.active_model})")
-
-        elif gemini_key:
-            self.provider = "Google GenAI"
-            self.api_key = gemini_key
-            self.active_model = os.environ.get("GEMINI_MODEL") or "gemini-2.5-flash"
+        if self.provider == "Google GenAI" and self.api_key:
             try:
                 from google import genai
-                self.client = genai.Client(api_key=gemini_key)
+                self.client = genai.Client(api_key=self.api_key)
                 logger.info(f"VisionAgent: Active multimodal provider Google GenAI (model: {self.active_model})")
             except Exception as e:
                 logger.warning(f"VisionAgent: Failed to initialize Google GenAI Client: {e}")
                 self.provider = "offline"
                 self.active_model = "none"
+        elif self.provider == "OpenRouter":
+            logger.info(f"VisionAgent: Active multimodal provider OpenRouter with Google Gemini (model: {self.active_model})")
         else:
-            self.provider = "offline"
-            self.active_model = "none"
             logger.info("VisionAgent: No API key found. Operating in strict offline development failure mode (no fake observations).")
+
+    def check_env_loading(self) -> Dict[str, Any]:
+        """Inspects and returns detailed status of .env loading and API keys."""
+        return {
+            "env_loaded": self.config.env_loaded or (self.config.env_path != "not_found"),
+            "env_path": self.config.env_path,
+            "openrouter_key_present": bool(self.config.openrouter_key),
+            "gemini_key_present": bool(self.config.gemini_key),
+            "api_key_preview": self.config.api_key_preview,
+            "configured_vision_model": self.config.configured_vision_model,
+            "configured_vision_provider": self.config.configured_vision_provider,
+        }
 
     def get_setup_status(self) -> Dict[str, Any]:
         """Safe setup check showing whether Gemini Vision is active."""
-        env_status = self.check_env_loading()
         is_gemini_active = (self.provider != "offline" and ("gemini" in self.active_model.lower() or self.provider == "Google GenAI"))
         return {
             "status": "ready" if self.provider != "offline" else "offline",
@@ -130,9 +176,9 @@ class VisionAgent:
             "provider": self.provider,
             "model": self.active_model,
             "api_key_configured": bool(self.api_key),
-            "api_key_preview": env_status["api_key_preview"],
-            "env_loaded": env_status["env_loaded"],
-            "env_path": env_status["env_path"],
+            "api_key_preview": self.config.api_key_preview,
+            "env_loaded": self.config.env_loaded,
+            "env_path": self.config.env_path,
             "evidence_mode": "live_gemini_multimodal_inference" if is_gemini_active else ("live_multimodal_inference" if self.provider != "offline" else "offline_uncertainty_only"),
             "mock_fallback": "disabled (uncertainty failure state only)",
             "fake_fallback_enabled": False,
@@ -196,6 +242,61 @@ class VisionAgent:
                 "confidence": 0.15,
             }
 
+    def _parse_vision_response_dict(
+        self,
+        result_dict: Dict[str, Any],
+        image_bytes: bytes,
+        image_filename: Optional[str],
+        mime_type: str,
+        elapsed_ms: int,
+    ) -> VisionEvidence:
+        """Shared parser that maps multimodal JSON output into a validated VisionEvidence record."""
+        result_dict["has_image"] = True
+        is_gemini = "gemini" in self.active_model.lower()
+        result_dict["model_used"] = f"{self.active_model} ({self.provider})"
+        result_dict["image_analyzed"] = image_filename or ("uploaded_image" if len(image_bytes) > 0 else "unknown")
+        result_dict["vision_confidence"] = float(result_dict.get("confidence", 0.95))
+
+        check_text = f"{result_dict.get('detected_product', '')} {result_dict.get('uncertainty_notes', '')} {image_filename or ''}"
+        is_non_prod = is_non_product_media(check_text)
+        result_dict["physical_product_detected"] = not is_non_prod
+
+        result_dict["detected_evidence"] = {
+            "product": result_dict.get("detected_product"),
+            "brand": result_dict.get("detected_brand"),
+            "visible_parts": result_dict.get("visible_parts", []),
+            "missing_candidates": result_dict.get("missing_candidates", []),
+            "visible_damage": result_dict.get("visible_damage", []),
+            "packaging_state": result_dict.get("packaging_state"),
+            "uncertainty_notes": result_dict.get("uncertainty_notes"),
+            "physical_product_detected": not is_non_prod,
+        }
+        result_dict["inference_source"] = (
+            f"gemini_multimodal:{self.active_model} (via {self.provider})"
+            if is_gemini
+            else f"multimodal:{self.active_model}"
+        )
+        result_dict["is_gemini_inference"] = is_gemini
+        result_dict["is_fallback"] = False
+
+        log_block = (
+            f"\n============================================================\n"
+            f"  [REAL MULTIMODAL GEMINI VISION INFERENCE VERIFIED]\n"
+            f"============================================================\n"
+            f"  - model used       : {result_dict['model_used']}\n"
+            f"  - image analyzed   : {result_dict['image_analyzed']} ({len(image_bytes)} bytes, {mime_type})\n"
+            f"  - latency          : {elapsed_ms} ms\n"
+            f"  - vision confidence: {result_dict['vision_confidence']}\n"
+            f"  - detected evidence: {json.dumps(result_dict['detected_evidence'], indent=4)}\n"
+            f"  - source           : {result_dict['inference_source']}\n"
+            f"  - fallback status  : DISABLED (genuine live multimodal inference)\n"
+            f"============================================================"
+        )
+        logger.info(log_block)
+        print(log_block, flush=True)
+
+        return VisionEvidence(**result_dict)
+
     def extract_evidence(
         self,
         image_base64: Optional[str] = None,
@@ -207,6 +308,7 @@ class VisionAgent:
         image_bytes = None
         mime_type = "image/jpeg"
         corrupted_base64 = False
+        cached_b64_str: Optional[str] = None
 
         if image_base64:
             try:
@@ -219,7 +321,9 @@ class VisionAgent:
                         mime_type = "image/webp"
                     elif "image/gif" in prefix:
                         mime_type = "image/gif"
-                image_bytes = base64.b64decode(raw_b64)
+                clean_b64 = raw_b64.strip()
+                image_bytes = base64.b64decode(clean_b64)
+                cached_b64_str = clean_b64
             except Exception as exc:
                 logger.warning(f"Error decoding image base64: {exc}")
                 corrupted_base64 = True
@@ -262,14 +366,31 @@ class VisionAgent:
             )
 
         if self.provider == "OpenRouter" and image_bytes:
-            try:
-                return self._call_openrouter_vision(image_bytes, mime_type, catalog_product, image_filename)
-            except Exception as exc:
-                logger.warning(f"OpenRouter Vision call failed: {exc}. Diverting to strict uncertainty failure state.")
+            for attempt in range(2):
+                try:
+                    return self._call_openrouter_vision(
+                        image_bytes=image_bytes,
+                        mime_type=mime_type,
+                        catalog_product=catalog_product,
+                        image_filename=image_filename,
+                        cached_b64=cached_b64_str,
+                    )
+                except Exception as exc:
+                    if attempt == 0 and ("getaddrinfo" in str(exc).lower() or "timed out" in str(exc).lower() or "connection reset" in str(exc).lower()):
+                        logger.warning(f"Transient OpenRouter network issue ({exc}); retrying once...")
+                        time.sleep(1.0)
+                        continue
+                    logger.warning(f"OpenRouter Vision call failed: {exc}. Diverting to strict uncertainty failure state.")
+                    break
 
         elif self.provider == "Google GenAI" and self.client and image_bytes:
             try:
-                return self._call_gemini_vision(image_bytes, mime_type, catalog_product, image_filename)
+                return self._call_gemini_vision(
+                    image_bytes=image_bytes,
+                    mime_type=mime_type,
+                    catalog_product=catalog_product,
+                    image_filename=image_filename,
+                )
             except Exception as exc:
                 logger.warning(f"Gemini Vision call failed: {exc}. Diverting to strict uncertainty failure state.")
 
@@ -286,44 +407,12 @@ class VisionAgent:
         mime_type: str,
         catalog_product: Optional[Any],
         image_filename: Optional[str],
+        cached_b64: Optional[str] = None,
     ) -> VisionEvidence:
         """Invokes OpenRouter Multimodal Vision API (Google Gemini) to analyze real image evidence."""
-        expected_parts_str = ", ".join(catalog_product.expected_parts) if catalog_product else "Unknown"
-        title_str = catalog_product.title if catalog_product else "General Merchandise"
-        sku_str = catalog_product.sku if catalog_product else "Unknown"
-
-        prompt = f"""You are an expert Warehouse Vision Evidence Inspector for customer returns.
-Analyze ONLY the provided image of the returned item/parcel.
-DO NOT fabricate evidence from catalog specifications or scenario inputs.
-
-Inspection Instructions:
-1. Examine the image and identify the actual physical product pictured.
-   - Describe what is physically visible.
-2. Read any visible brand name or manufacturer markings physically imprinted on the item or packaging.
-3. List in `visible_parts` ONLY components that are clearly visible in the image.
-4. List an item in `missing_candidates` ONLY if there is affirmative visual proof of absence.
-5. List observable physical damage in `visible_damage` (scratches, cracks, tears, dents, broken seals).
-6. Classify packaging_state strictly from physical cues: "factory_sealed", "opened_unused", "signs_of_use", "damaged", or "uncertain".
-7. Set confidence score (0.0 to 1.0) reflecting visual certainty.
-
-Expected Reference for comparison (do NOT invent observations from this reference):
-- Expected Product: {title_str}
-- Expected SKU: {sku_str}
-- Expected Parts: [{expected_parts_str}]
-
-Return ONLY a valid JSON object matching this schema:
-{{
-  "detected_product": "description of item seen",
-  "detected_brand": null,
-  "visible_parts": ["visible parts list"],
-  "missing_candidates": [],
-  "visible_damage": [],
-  "packaging_state": "opened_unused",
-  "uncertainty_notes": null,
-  "confidence": 0.95
-}}
-"""
-        b64_url = f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode()}"
+        prompt = _build_vision_prompt(catalog_product)
+        b64_payload = cached_b64 or base64.b64encode(image_bytes).decode("utf-8")
+        b64_url = f"data:{mime_type};base64,{b64_payload}"
 
         payload = {
             "model": self.active_model,
@@ -333,11 +422,11 @@ Return ONLY a valid JSON object matching this schema:
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": b64_url}}
-                    ]
+                        {"type": "image_url", "image_url": {"url": b64_url}},
+                    ],
                 }
             ],
-            "temperature": 0.1
+            "temperature": 0.1,
         }
 
         req = urllib.request.Request(
@@ -347,8 +436,8 @@ Return ONLY a valid JSON object matching this schema:
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
                 "HTTP-Referer": "https://cube.returns.manager",
-                "X-Title": "Cube Returns Manager"
-            }
+                "X-Title": "Cube Returns Manager",
+            },
         )
 
         t_start = time.time()
@@ -360,55 +449,18 @@ Return ONLY a valid JSON object matching this schema:
         start = clean_text.find("{")
         end = clean_text.rfind("}")
         if start != -1 and end != -1:
-            clean_text = clean_text[start:end+1]
+            clean_text = clean_text[start : end + 1]
 
         result_dict = json.loads(clean_text)
-        result_dict["has_image"] = True
-
-        is_gemini = "gemini" in self.active_model.lower()
-        result_dict["model_used"] = f"{self.active_model} ({self.provider})"
-        result_dict["image_analyzed"] = image_filename or ("uploaded_image" if len(image_bytes) > 0 else "unknown")
-        result_dict["vision_confidence"] = float(result_dict.get("confidence", 0.95))
-        
-        non_prod_check_text = f"{result_dict.get('detected_product', '')} {result_dict.get('uncertainty_notes', '')} {image_filename or ''}".lower()
-        is_non_prod = any(
-            re.search(r'\b' + re.escape(term) + r'\b', non_prod_check_text)
-            for term in ["logo", "screenshot", "document", "graphic", "invoice", "unrelated media", "non-product image", "non-product", "non product", "screengrab", "receipt", "shipping label", "paper", "blank screen", "clipart", "wallpaper", "illustration"]
-        )
-        result_dict["physical_product_detected"] = not is_non_prod
-
-        result_dict["detected_evidence"] = {
-            "product": result_dict.get("detected_product"),
-            "brand": result_dict.get("detected_brand"),
-            "visible_parts": result_dict.get("visible_parts", []),
-            "missing_candidates": result_dict.get("missing_candidates", []),
-            "visible_damage": result_dict.get("visible_damage", []),
-            "packaging_state": result_dict.get("packaging_state"),
-            "uncertainty_notes": result_dict.get("uncertainty_notes"),
-            "physical_product_detected": not is_non_prod,
-        }
-        result_dict["inference_source"] = f"gemini_multimodal:{self.active_model} (via {self.provider})" if is_gemini else f"multimodal:{self.active_model}"
-        result_dict["is_gemini_inference"] = is_gemini
-        result_dict["is_fallback"] = False
-
         elapsed_ms = int((time.time() - t_start) * 1000)
-        log_block = (
-            f"\n============================================================\n"
-            f"  [REAL MULTIMODAL GEMINI VISION INFERENCE VERIFIED]\n"
-            f"============================================================\n"
-            f"  - model used       : {result_dict['model_used']}\n"
-            f"  - image analyzed   : {result_dict['image_analyzed']} ({len(image_bytes)} bytes, {mime_type})\n"
-            f"  - latency          : {elapsed_ms} ms\n"
-            f"  - vision confidence: {result_dict['vision_confidence']}\n"
-            f"  - detected evidence: {json.dumps(result_dict['detected_evidence'], indent=4)}\n"
-            f"  - source           : {result_dict['inference_source']}\n"
-            f"  - fallback status  : DISABLED (genuine live multimodal inference)\n"
-            f"============================================================"
-        )
-        logger.info(log_block)
-        print(log_block, flush=True)
 
-        return VisionEvidence(**result_dict)
+        return self._parse_vision_response_dict(
+            result_dict=result_dict,
+            image_bytes=image_bytes,
+            image_filename=image_filename,
+            mime_type=mime_type,
+            elapsed_ms=elapsed_ms,
+        )
 
     def _call_gemini_vision(
         self,
@@ -420,32 +472,7 @@ Return ONLY a valid JSON object matching this schema:
         """Invokes Gemini Multimodal Vision API directly to extract strictly observable features."""
         from google.genai import types
 
-        expected_parts_str = ", ".join(catalog_product.expected_parts) if catalog_product else "Unknown"
-        title_str = catalog_product.title if catalog_product else "General Merchandise"
-        sku_str = catalog_product.sku if catalog_product else "Unknown"
-
-        prompt = f"""
-You are an expert Warehouse Vision Evidence Inspector for customer returns.
-Analyze ONLY the provided image of the returned item/parcel.
-DO NOT fabricate evidence from catalog specifications or scenario inputs.
-
-Inspection Instructions:
-1. Examine the image and identify the actual physical product pictured.
-   - Describe what is physically visible.
-2. Read any visible brand name or manufacturer markings physically imprinted on the item or packaging.
-3. List in `visible_parts` ONLY components that are clearly visible in the image.
-4. List an item in `missing_candidates` ONLY if there is affirmative visual proof of absence.
-5. List observable physical damage in `visible_damage` (scratches, cracks, tears, dents, broken seals).
-6. Classify packaging_state strictly from physical cues: "factory_sealed", "opened_unused", "signs_of_use", "damaged", or "uncertain".
-7. Set confidence score (0.0 to 1.0) reflecting visual certainty.
-
-Expected Reference for comparison (do NOT invent observations from this reference):
-- Expected Product: {title_str}
-- Expected SKU: {sku_str}
-- Expected Parts: [{expected_parts_str}]
-
-Return a valid JSON object matching the requested schema.
-"""
+        prompt = _build_vision_prompt(catalog_product)
         t_start = time.time()
         logger.info(f"VisionAgent: Calling Gemini Vision API ({self.active_model})...")
 
@@ -462,50 +489,15 @@ Return a valid JSON object matching the requested schema.
             ),
         )
         result_json = json.loads(response.text)
-        result_json["has_image"] = True
-        result_json["model_used"] = f"{self.active_model} (Google GenAI)"
-        result_json["image_analyzed"] = image_filename or ("uploaded_image" if len(image_bytes) > 0 else "unknown")
-        result_json["vision_confidence"] = float(result_json.get("confidence", 0.95))
-        
-        non_prod_check_text = f"{result_json.get('detected_product', '')} {result_json.get('uncertainty_notes', '')} {image_filename or ''}".lower()
-        is_non_prod = any(
-            re.search(r'\b' + re.escape(term) + r'\b', non_prod_check_text)
-            for term in ["logo", "screenshot", "document", "graphic", "invoice", "unrelated media", "non-product image", "non-product", "non product", "screengrab", "receipt", "shipping label", "paper", "blank screen", "clipart", "wallpaper", "illustration"]
-        )
-        result_json["physical_product_detected"] = not is_non_prod
-
-        result_json["detected_evidence"] = {
-            "product": result_json.get("detected_product"),
-            "brand": result_json.get("detected_brand"),
-            "visible_parts": result_json.get("visible_parts", []),
-            "missing_candidates": result_json.get("missing_candidates", []),
-            "visible_damage": result_json.get("visible_damage", []),
-            "packaging_state": result_json.get("packaging_state"),
-            "uncertainty_notes": result_json.get("uncertainty_notes"),
-            "physical_product_detected": not is_non_prod,
-        }
-        result_json["inference_source"] = f"gemini_multimodal:{self.active_model}"
-        result_json["is_gemini_inference"] = True
-        result_json["is_fallback"] = False
-
         elapsed_ms = int((time.time() - t_start) * 1000)
-        log_block = (
-            f"\n============================================================\n"
-            f"  [REAL GEMINI MULTIMODAL VISION INFERENCE VERIFIED]\n"
-            f"============================================================\n"
-            f"  - model used       : {result_json['model_used']}\n"
-            f"  - image analyzed   : {result_json['image_analyzed']} ({len(image_bytes)} bytes)\n"
-            f"  - latency          : {elapsed_ms} ms\n"
-            f"  - vision confidence: {result_json['vision_confidence']}\n"
-            f"  - detected evidence: {json.dumps(result_json['detected_evidence'], indent=4)}\n"
-            f"  - source           : {result_json['inference_source']}\n"
-            f"  - fallback status  : DISABLED (genuine live multimodal inference)\n"
-            f"============================================================"
-        )
-        logger.info(log_block)
-        print(log_block, flush=True)
 
-        return VisionEvidence(**result_json)
+        return self._parse_vision_response_dict(
+            result_dict=result_json,
+            image_bytes=image_bytes,
+            image_filename=image_filename,
+            mime_type=mime_type,
+            elapsed_ms=elapsed_ms,
+        )
 
     def _local_visual_extraction(
         self,
@@ -576,7 +568,7 @@ Return a valid JSON object matching the requested schema.
                     break
 
         if is_unrelated:
-            is_logo_graphic = any(k in fname_lower for k in ["logo", "hacksmiths", "screenshot", "document", "graphic", "invoice"])
+            is_logo_graphic = is_non_product_media(fname_lower)
             if is_logo_graphic:
                 desc = "Graphic Logo / Non-Product Image"
                 unrelated_notes = f"Visual evidence depicts non-product media ({desc}) conflicting with selected SKU {catalog_product.sku if catalog_product else ''}."
@@ -659,4 +651,3 @@ __all__ = [
     "check_env_loading",
     "get_default_vision_agent",
 ]
-
